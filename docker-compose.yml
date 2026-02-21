@@ -1,12 +1,51 @@
 version: "3.8"
 
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: matrix_postgres
+    environment:
+      POSTGRES_USER: matrix
+      POSTGRES_PASSWORD: matrix
+      POSTGRES_DB: matrixdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - matrix_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matrix -d matrixdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   edge:
     build: ./edge
+    container_name: matrix_edge
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://matrix:matrix@postgres:5432/matrixdb
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      CLOUD_API_URL: http://cloud:8000
+      CLOUD_API_KEY: changeme
+      LOCAL_MODEL: medgemma:4b
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./edge:/app
 
   cloud:
     build: ./cloud
+    container_name: matrix_cloud
     ports:
       - "9000:8000"
+    environment:
+      CLOUD_API_KEY: changeme
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      CLOUD_MODEL: llama3:latest
+    volumes:
+      - ./cloud:/app
+
+volumes:
+  matrix_pgdata:

@@ -1,13 +1,40 @@
-"""Configuration settings for the edge system."""
+"""Configuration settings for the edge system — updated with JWT secret."""
 from pydantic_settings import BaseSettings
+from functools import lru_cache
+
 
 class Settings(BaseSettings):
-    """Application settings."""
-    app_name: str = "Edge Clinic System"
+    app_name: str = "MaTriX-AI Edge System"
     debug: bool = False
-    database_url: str = "sqlite:///./clinic.db"
-    
+
+    # Database
+    database_url: str = "postgresql+asyncpg://matrix:matrix@localhost:5432/matrixdb"
+
+    # Local LLM (Ollama — MedGemma 4B)
+    ollama_base_url: str = "http://localhost:11434"
+    local_model: str = "medgemma:4b"
+
+    # Embeddings (768-dim per spec)
+    embedding_model: str = "all-mpnet-base-v2"
+
+    # Cloud escalation service
+    cloud_api_url: str = "http://localhost:9000"
+    cloud_api_key: str = "changeme"
+
+    # JWT Auth (frontend ↔ edge)
+    jwt_secret_key: str = "CHANGE_ME_USE_A_REAL_SECRET_IN_PRODUCTION"
+    jwt_algorithm: str = "HS256"
+
+    # Clinic shared password (nurse login)
+    clinic_password: str = "changeme123"
+
     class Config:
         env_file = ".env"
 
-settings = Settings()
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
