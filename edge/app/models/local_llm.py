@@ -27,7 +27,8 @@ class LocalLLM:
             "format": "json",
             "stream": False,
             "options": {
-                "temperature": 0.1,
+                "temperature": settings.local_llm_temperature,
+                "num_ctx": settings.local_llm_context,
                 "num_predict": 1200,
             },
         }
@@ -49,15 +50,20 @@ class LocalLLM:
                     ) from exc
                 await asyncio.sleep(2 ** attempt)   # exponential backoff
 
+        # This point is unreachable due to the raise inside the loop for the last attempt
+        return {}
+
     async def health_check(self) -> bool:
         """Return True if Ollama is reachable and model is available."""
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get(f"{self.base_url}/api/tags")
                 models = [m["name"] for m in resp.json().get("models", [])]
-                return any(self.model in m for m in models)
+                found = any(self.model in m for m in models)
+                return found
         except Exception:
             return False
+        return False  # Extra explicit return for linters
 
 
 # Module-level singleton

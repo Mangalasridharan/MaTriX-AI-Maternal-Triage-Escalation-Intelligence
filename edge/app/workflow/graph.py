@@ -9,6 +9,7 @@ from langgraph.graph import StateGraph, END
 from app.workflow.state import MaternalState
 from app.agents.risk_agent import run_risk_agent
 from app.agents.guideline_agent import run_guideline_agent
+from app.agents.critique_agent import run_critique_agent
 from app.agents.router import run_router
 from app.config import settings
 
@@ -67,12 +68,14 @@ def build_graph():
 
     workflow.add_node("risk_node", run_risk_agent)
     workflow.add_node("guideline_node", run_guideline_agent)
+    workflow.add_node("critique_node", run_critique_agent)
     workflow.add_node("router_node", run_router)
     workflow.add_node("escalation_node", escalation_node)
 
     workflow.set_entry_point("risk_node")
     workflow.add_edge("risk_node", "guideline_node")
-    workflow.add_edge("guideline_node", "router_node")
+    workflow.add_edge("guideline_node", "critique_node")
+    workflow.add_edge("critique_node", "router_node")
 
     workflow.add_conditional_edges(
         "router_node",
@@ -100,6 +103,7 @@ async def run_workflow(patient_data: dict) -> dict:
         "visit_id": None,
         "risk_output": None,
         "guideline_output": None,
+        "critique_output": None,
         "escalation_triggered": False,
         "escalation_reason": "",
         "executive_output": None,

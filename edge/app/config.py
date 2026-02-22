@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     # Local LLM (Ollama — MedGemma 4B)
     ollama_base_url: str = "http://localhost:11434"
     local_model: str = "medgemma:4b"
+    local_llm_context: int = 4096
+    local_llm_temperature: float = 0.1
 
     # Embeddings (768-dim per spec)
     embedding_model: str = "all-mpnet-base-v2"

@@ -7,6 +7,7 @@ import { IntakeForm } from "@/components/triage/IntakeForm";
 import { RiskCard } from "@/components/triage/RiskCard";
 import { GuidelinePanel } from "@/components/triage/GuidelinePanel";
 import { EscalationBanner } from "@/components/triage/EscalationBanner";
+import { AgenticSwarmVisualizer } from "@/components/triage/AgenticSwarmVisualizer";
 
 export default function TriagePage() {
   const [result, setResult]     = useState<CaseResult | null>(null);
@@ -42,33 +43,26 @@ export default function TriagePage() {
 
         {/* Results — right */}
         <div className="xl:col-span-8 space-y-5">
+          {(isLoading || result) && (
+            <AgenticSwarmVisualizer active={isLoading} />
+          )}
+
           {!result && !isLoading && (
-            <div className="glass flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/40 flex items-center justify-center mb-4">
-                <span className="text-2xl">🩺</span>
+            <div className="spatial-panel flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                <span className="text-3xl">🩺</span>
               </div>
-              <p className="text-slate-500 font-medium">Submit a case to run AI triage</p>
-              <p className="text-slate-700 text-xs mt-1">Complete the 3-step wizard on the left</p>
+              <h3 className="text-xl font-light text-white mb-2">Ready for Analysis</h3>
+              <p className="text-white/40 text-sm max-w-xs mx-auto">Submit a case via the Intake Wizard to trigger the Agentic Swarm workflow.</p>
             </div>
           )}
 
-          {isLoading && (
-            <div className="glass py-20 flex flex-col items-center justify-center">
-              <div className="relative w-16 h-16 mb-5">
-                <div className="absolute inset-0 rounded-full border-2 border-violet-500/20 animate-ping-slow" />
-                <div className="w-full h-full rounded-full border-2 border-violet-500/40 border-t-violet-500 animate-spin" />
-              </div>
-              <p className="text-violet-400 font-semibold">Running AI Workflow…</p>
-              <p className="text-slate-600 text-xs mt-2">Risk Agent → Guideline Agent → Router</p>
-            </div>
-          )}
-
-          {result && (
-            <>
+          {result && !isLoading && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
               <RiskCard risk={result.risk_output} />
               <EscalationBanner result={result} />
               <GuidelinePanel guide={result.guideline_output} />
-            </>
+            </div>
           )}
         </div>
       </div>

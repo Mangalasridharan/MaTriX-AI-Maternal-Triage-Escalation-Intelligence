@@ -13,6 +13,7 @@ class MaternalState(TypedDict):
     # Agent outputs
     risk_output: Optional[dict]
     guideline_output: Optional[dict]
+    critique_output: Optional[dict]
 
     # Router decision
     escalation_triggered: bool
