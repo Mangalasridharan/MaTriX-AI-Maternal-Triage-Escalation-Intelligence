@@ -42,6 +42,7 @@ Thumbs.db
 # Jupyter Notebooks
 .ipynb_checkpoints/
 *.ipynb
+!notebooks/Kaggle_MaTriX_Agentic_Validation.ipynb
 
 # Databases
 *.db
