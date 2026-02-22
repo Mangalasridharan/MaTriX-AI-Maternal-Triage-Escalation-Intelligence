@@ -19,8 +19,8 @@
 
 @layer base {
   body {
-    background-color: var(--ink-obsidian);
-    color: var(--text-primary);
+    background-color: #050811;
+    color: #e2e8f0;
     -webkit-font-smoothing: antialiased;
     font-family: var(--font-inter), sans-serif;
     /* Prevent overscroll bounce showing white on mac */

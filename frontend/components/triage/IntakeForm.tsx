@@ -45,6 +45,10 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
   };
 
   const handleSubmit = async () => {
+    if (!sys || !dia || !name || !age || !ga) {
+      setError("Please ensure all required clinical and patient profile fields are filled.");
+      return;
+    }
     setError(""); setIsLoading(true);
     try {
       const payload: CaseSubmission = {
@@ -54,7 +58,15 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
       };
       onResult(await apiClient.submitCase(payload));
     } catch (e: any) {
-      setError(e?.response?.data?.detail || "Submission failed.");
+      const detail = e?.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        // Handle Pydantic validation error array
+        setError(detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(", "));
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError("Submission failed. Please check your inputs.");
+      }
     } finally { setIsLoading(false); }
   };
 
