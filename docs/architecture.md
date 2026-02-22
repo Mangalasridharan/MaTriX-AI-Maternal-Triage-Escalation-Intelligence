@@ -8,7 +8,7 @@ MaTriX-AI employs a Hybrid Edge-Cloud Multi-Agent architecture. It is designed t
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS (Custom "Aura & Ink" Spatial Editorial design)
 - **Icons:** Lucide React
-- **Data Fetching:** Axios with HTTP interceptors for JWT injection
+- **Data Fetching:** TanStack Query (React Query) + Axios
 - **Charts:** Recharts
 
 ## 2. Edge Node: The Offline Agent
@@ -16,11 +16,11 @@ MaTriX-AI employs a Hybrid Edge-Cloud Multi-Agent architecture. It is designed t
 Runs on a local machine within the clinic.
 
 - **Framework:** FastAPI (Python 3.13)
-- **Database:** PostgreSQL with `pgvector` extension (asyncpg / psycopg driver)
-- **ORM:** SQLAlchemy (Async)
+- **Database:** PostgreSQL with `pgvector` extension
+- **Workflow Engine:** LangGraph (StateGraph)
 - **Local LLM Runner:** Ollama
-- **Local Model:** `medgemma:4b`
-- **Embedding Model:** `all-mpnet-base-v2` (SentenceTransformers)
+- **Local Model:** `medgemma:4b` (optimized at Q4_K_M for consumer GPUs)
+- **Embedding Model:** `all-mpnet-base-v2`
 - **Authentication:** `bcrypt` for password hashing, `PyJWT` for token generation.
 
 ## 3. Cloud Node: The Executive Agent
@@ -28,8 +28,8 @@ Runs on a local machine within the clinic.
 Dynamically triggered only when a case breaches severity thresholds.
 
 - **Framework:** FastAPI
-- **Inference Hardware:** AWS / HuggingFace Inference Endpoints
-- **Cloud Model:** `google/gemma-2-27b-it` (or Ollama fallback for dev)
+- **Inference Hardware:** **AWS SageMaker** (Direct Boto3 integration) or **HuggingFace Inference Endpoints**
+- **Cloud Model:** `google/medgemma-27b-it`
 - **Routing Logic:** Evaluates full edge context to generate referral, transport, and receiving-facility requirements.
 
 ---
@@ -38,8 +38,10 @@ Dynamically triggered only when a case breaches severity thresholds.
 
 1. User submits vitals/symptoms on Frontend.
 2. Frontend `POST` to Edge API.
-3. Edge embeds text and queries `pgvector` for WHO guidelines.
-4. Edge prompts local `MedGemma 4B` with patient data + guidelines.
-5. Edge returns initial Triage plan.
-6. _If Critical:_ Edge makes async request to Cloud API (`Gemma-2-27b`).
-7. Cloud API returns Executive Care and Transit plan back to Frontend.
+3. Edge executes **Agentic Swarm** (LangGraph):
+   - **Risk Agent:** Initial analysis.
+   - **Guideline Agent:** RAG retrieval from `pgvector`.
+   - **Critique Agent:** Self-correction and safety audit of care plans.
+   - **Router:** Decides if cloud escalation is mandatory.
+4. _If Escalated:_ Edge calls Cloud API (SageMaker/HF) for `MedGemma 27B` synthesis.
+5. Frontend displays real-time execution via the **Swarm Visualizer** before showing final care plans.

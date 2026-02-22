@@ -18,7 +18,11 @@ Create an `.env` file in the `edge` folder:
 ```
 DATABASE_URL=postgresql+asyncpg://matrix:matrix@localhost:5432/matrixdb
 OLLAMA_BASE_URL=http://localhost:11434
-LOCAL_MODEL=medgemma:4b
+
+# Recommended: 4-bit quantization for RTX 3050 and other consumer GPUs
+LOCAL_MODEL=hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
+
+LOCAL_LLM_CONTEXT=4096
 EMBEDDING_MODEL=all-mpnet-base-v2
 CLOUD_API_URL=http://localhost:9000
 CLOUD_API_KEY=matrix_cloud_dev_secret_key
@@ -33,9 +37,17 @@ Create an `.env` file in the `cloud` folder:
 
 ```
 CLOUD_API_KEY=matrix_cloud_dev_secret_key
+
+# AWS SageMaker (Primary)
+SAGEMAKER_ENDPOINT_NAME=your-endpoint-name
+AWS_REGION=us-east-1
+
+# HuggingFace (Alternative)
 HF_INFERENCE_ENDPOINT=
 HF_API_TOKEN=
-HF_MODEL_ID=google/gemma-2-27b-it
+HF_MODEL_ID=google/medgemma-27b-it
+
+# Ollama fallback
 OLLAMA_BASE_URL=http://localhost:11434
 CLOUD_MODEL=llama3:latest
 DEBUG=True
@@ -60,9 +72,9 @@ You must boot the database and the local LLM first.
    docker-compose up -d
    ```
 2. **Start the Local LLM:**
-   Make sure Ollama is open. Pull the base model if needed:
+   Make sure Ollama is open. Pull the optimized model:
    ```bash
-   ollama pull medgemma:4b
+   ollama pull hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
    ```
 
 ---

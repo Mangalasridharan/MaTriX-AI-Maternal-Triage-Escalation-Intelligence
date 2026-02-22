@@ -1,18 +1,18 @@
 # Pending / Next Steps
 
-1. **Production Deployment**
-   - Containerize the Next.js frontend, Edge API, and Cloud API with optimized multi-stage Dockerfiles.
-   - Deploy the Cloud API to a managed service (e.g., AWS Fargate or Render) connecting to a HuggingFace Inference Endpoint.
+1. **Cloud Production Deployment**
+   - Finalize the **AWS SageMaker** endpoint deployment for MedGemma 27B (on-the-fly quantization config).
+   - Containerize all nodes with multi-stage Dockerfiles for Kubernetes/ECS deployment.
 
 2. **Expanded Medical Guidelines Ingestion**
-   - Currently, the RAG database holds sample embeddings. We need to parse and embed the complete text of the latest WHO Maternal Health Guidelines and ACOG Practice Bulletins.
+   - Parse and embed the complete text of the latest WHO Maternal Health Guidelines and ACOG Practice Bulletins into the edge RAG system.
 
 3. **Clinician Testing & Safety Validation**
-   - Conduct strict "red team" and edge-case testing with real obstetricians to ensure the LLM never hallucinates critical drug dosages (e.g., MgSO4 administration).
-   - Tune the RAG system's cosine similarity thresholds to enforce strict adherence to the embedded guidelines.
+   - Conduct strict "red team" testing with real obstetricians to audit the **Critique Agent's** performance in identifying unsafe pill dosages.
+   - Refine the self-correction logic based on professional feedback.
 
 4. **Offline Mobile Port**
-   - Convert the Next.js PWA into a fully compiled React Native application to ensure the UI operates even when disconnected from the local Edge server for brief periods.
+   - Convert the Next.js PWA into a fully compiled React Native application to ensure the UI operates even when disconnected from the clinic network.
 
-5. **Advanced Analytics**
-   - Implement the actual Recharts UI for `BpChart` and `RiskDistributionChart` in the Analytics tab, pulling aggregated data from the Edge database.
+5. **Advanced Predictive Analytics**
+   - Implement population-wide risk forecasting using historical triage data to predict outbreak or seasonal maternal health trends.

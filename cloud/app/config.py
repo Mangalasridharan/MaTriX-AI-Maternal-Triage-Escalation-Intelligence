@@ -8,10 +8,14 @@ class CloudSettings(BaseSettings):
     # Security
     cloud_api_key: str = "changeme"
 
-    # HuggingFace Inference Endpoint (AWS-hosted 27B)
+    # HuggingFace Inference Endpoint (AWS-hosted 27B) - Optional
     hf_inference_endpoint: str = ""       # e.g. https://xxx.us-east-1.aws.endpoints.huggingface.cloud
     hf_api_token: str = ""                # HF API token
-    hf_model_id: str = "google/gemma-2-27b-it"  # default model
+    hf_model_id: str = "google/medgemma-27b-it"  # default model
+
+    # AWS SageMaker (Alternative to HF Endpoint)
+    sagemaker_endpoint_name: str = ""     # e.g. medgemma-27b-endpoint
+    aws_region: str = "us-east-1"
 
     # Ollama fallback (local)
     ollama_base_url: str = "http://localhost:11434"
