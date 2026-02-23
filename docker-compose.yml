@@ -47,5 +47,15 @@ services:
     volumes:
       - ./cloud:/app
 
+  frontend:
+    build: ./frontend
+    container_name: matrix_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - edge
+
 volumes:
   matrix_pgdata:

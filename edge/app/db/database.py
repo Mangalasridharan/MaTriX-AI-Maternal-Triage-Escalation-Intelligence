@@ -1,11 +1,13 @@
 """Async database connection and table initialization."""
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 
+Base = declarative_base()
+
 # Import all model modules so SQLAlchemy metadata includes every table
-from app.db.models import Base
-import app.db.user_models  # noqa: F401 — registers User table with Base.metadata
+import app.db.models  # noqa: F401
+import app.db.user_models  # noqa: F401
 
 
 engine = create_async_engine(

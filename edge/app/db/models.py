@@ -6,9 +6,8 @@ from sqlalchemy import (
     DateTime, ForeignKey, Text, JSON, Index
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, declarative_base
-
-Base = declarative_base()
+from sqlalchemy.orm import relationship
+from app.db.database import Base
 
 
 def new_uuid():

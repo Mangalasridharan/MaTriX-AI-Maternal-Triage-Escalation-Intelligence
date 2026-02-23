@@ -80,6 +80,8 @@ class CaseResult(BaseModel):
     escalated: bool
     escalation_reason: Optional[str] = None
     executive_output: Optional[ExecutivePlan] = None
+    cloud_connected: bool = False
+    mode: str = "offline"
 
 
 class HistoryItem(BaseModel):
@@ -89,6 +91,35 @@ class HistoryItem(BaseModel):
     risk_level: str
     risk_score: float
     escalated: bool
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+class UserBase(BaseModel):
+    username: str
+    clinic_name: Optional[str] = "Default Clinic"
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class User(UserBase):
+    id: str  # UUID as string
+    role: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # ── Cloud ─────────────────────────────────────────────────────────────────────

@@ -3,15 +3,14 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 from app.config import settings
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 SECRET_KEY = settings.jwt_secret_key
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8   # 8-hour clinic session
-
-bearer_scheme = HTTPBearer()
-
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12  # 12-hour session
 
 import bcrypt
 
@@ -25,13 +24,11 @@ def verify_password(plain: str, hashed: str) -> bool:
     except Exception:
         return False
 
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 def verify_token(token: str) -> dict:
     try:
@@ -43,8 +40,5 @@ def verify_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> dict:
-    return verify_token(credentials.credentials)
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    return verify_token(token)

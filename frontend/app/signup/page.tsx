@@ -22,7 +22,13 @@ export default function SignupPage() {
       setSuccess(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Initialisation failed. Identity already exists.");
+      console.error("Signup error:", err);
+      const detail = err?.response?.data?.detail;
+      if (detail === "Username already exists") {
+        setError("This account already exists. Please choose a different username.");
+      } else {
+        setError(detail || "Initialisation failed. Please check your connection to the Edge Gateway.");
+      }
     } finally { setLoading(false); }
   };
 

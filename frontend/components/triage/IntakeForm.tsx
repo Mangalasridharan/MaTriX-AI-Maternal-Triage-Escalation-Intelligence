@@ -34,6 +34,8 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
   const [hr, setHr]           = useState("");
   const [protein, setProtein] = useState("none");
   const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [visionResult, setVisionResult] = useState<any>(null);
+  const [isVisionLoading, setIsVisionLoading] = useState(false);
 
   const toggleSym = (k: string) =>
     setSymptoms((s) => s.includes(k) ? s.filter((x) => x !== k) : [...s, k]);
@@ -76,7 +78,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
       {/* Immersive Step Counter */}
       <div className="mb-12 flex justify-center">
         <div className="flex items-center gap-3 px-6 py-2 rounded-full border border-white/[0.05] bg-white/[0.02] backdrop-blur-md">
-          {[1, 2, 3].map((num) => (
+          {[1, 2, 3, 4].map((num) => (
             <div key={num} className="flex items-center">
               <div className={`w-2 h-2 rounded-full transition-all duration-500 ${step === num ? 'w-8 bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : step > num ? 'bg-white/40' : 'bg-white/10'}`} />
             </div>
@@ -163,6 +165,66 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
             )}
           </div>
         )}
+
+        {step === 4 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tighter text-white/90">Multi-Modal Vision</h2>
+            
+            <div className="bg-black/40 border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center">
+               <div className="w-16 h-16 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                 <Cpu className="text-violet-400" size={28} />
+               </div>
+               <h3 className="text-xl font-light text-white mb-2">Upload Clinical Imagery</h3>
+               <p className="text-white/40 text-sm max-w-sm mb-8 leading-relaxed">
+                 Inject visual context directly into the edge pipeline. <b>PaliGemma 3B (Offline VLM)</b> will estimate blood loss volumes from pads, or detect extreme edema.
+               </p>
+               
+               <div 
+                 onClick={async () => {
+                   if (isVisionLoading) return;
+                   setIsVisionLoading(true);
+                   try {
+                     const res = await apiClient.analyzeVision("fake_base64_data", "Analyze for maternal risk signs like blood loss or edema.");
+                     setVisionResult(res);
+                   } catch (e) {
+                     setError("Vision analysis failed. Ensure Cloud service is online.");
+                   } finally {
+                     setIsVisionLoading(false);
+                   }
+                 }}
+                 className={`w-full max-w-sm border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer group flex flex-col items-center
+                   ${isVisionLoading ? 'border-cyan-500 bg-cyan-500/10 cursor-wait' : 'border-white/20 hover:border-violet-500/50 hover:bg-violet-500/5'}`}>
+                  {isVisionLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                       <span className="text-cyan-400 font-mono text-[10px] animate-pulse">PaliGemma 3B Processing...</span>
+                    </div>
+                  ) : (
+                    <span className="text-white/50 group-hover:text-violet-300 font-mono text-xs uppercase tracking-widest">+ Select Image for PaliGemma</span>
+                  )}
+               </div>
+
+               {visionResult && (
+                 <div className="mt-8 p-6 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-left animate-in zoom-in duration-500">
+                    <h4 className="text-violet-400 font-mono text-[10px] uppercase tracking-widest mb-2">VLM Analysis Output</h4>
+                    <p className="text-white/80 text-sm font-light leading-relaxed italic">"{visionResult.analysis}"</p>
+                    {visionResult.findings?.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {visionResult.findings.map((f: string, i: number) => (
+                          <span key={i} className="px-2 py-1 rounded bg-white/5 text-white/40 text-[10px] border border-white/5">{f}</span>
+                        ))}
+                      </div>
+                    )}
+                 </div>
+               )}
+               
+               <div className="mt-6 flex justify-center">
+                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase tracking-widest">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Edge-to-Cloud Bridge Active
+                 </div>
+               </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -179,7 +241,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
           </button>
         ) : <div />}
 
-        {step < 3 ? (
+        {step < 4 ? (
           <button 
             onClick={() => setStep(step + 1)} 
             disabled={!canNext()}

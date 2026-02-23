@@ -1,5 +1,1 @@
-"""Dependency injection setup."""
-
-async def get_current_user():
-    """Get the current authenticated user."""
-    pass
+from app.utils.auth import get_current_user

@@ -15,23 +15,23 @@ export function RiskCard({ risk }: { risk: RiskResult }) {
   const conf = Math.round(risk.confidence * 100);
 
   return (
-    <div className={`spatial-panel p-8 relative overflow-hidden transition-all duration-1000 ${meta.border} ${meta.bg} ${meta.shadow}`}>
+    <div className={`spatial-panel p-6 relative overflow-hidden transition-all duration-1000 ${meta.border} ${meta.bg} ${meta.shadow}`}>
       
       {/* Background Ambient Glow for Severe */}
       {risk.risk_level === "severe" && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-rose-500/20 blur-[100px] pointer-events-none rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
       )}
 
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         
         {/* Core Metric (Left) */}
-        <div className="md:col-span-4 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10 pb-8 md:pb-0 md:pr-8">
+        <div className="md:col-span-4 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0 md:pr-6">
           <p className="label-mono mb-2">AI Risk Index</p>
-          <div className="relative">
-            <span className={`text-8xl md:text-9xl font-black tracking-tighter ${meta.color} drop-shadow-lg`}>
+          <div className="relative flex items-center justify-center">
+            <span className={`text-6xl md:text-7xl font-black tracking-tighter ${meta.color} drop-shadow-lg leading-none`}>
               {pct}
             </span>
-            <span className="absolute top-2 -right-4 text-2xl text-white/30">%</span>
+            <span className="text-xl text-white/30 ml-1 font-semibold">%</span>
           </div>
           
           <div className={`mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border ${meta.border} bg-black/40 backdrop-blur-md`}>

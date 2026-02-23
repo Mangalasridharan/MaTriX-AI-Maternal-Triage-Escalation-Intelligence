@@ -21,6 +21,10 @@ class MaternalState(TypedDict):
 
     # Cloud executive output (only if escalated)
     executive_output: Optional[dict]
+    
+    # Connectivity / Mode Tracking
+    cloud_connected: bool
+    mode: str # 'offline' or 'online'
 
     # Error tracking
     error: Optional[str]

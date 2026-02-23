@@ -20,9 +20,11 @@ export function EscalationBanner({ result }: { result: CaseResult }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-emerald-400">Case manageable locally</p>
-          <p className="text-xs text-slate-500 mt-0.5">No cloud escalation required. Follow the WHO guideline plan.</p>
+          <p className="text-xs text-slate-500 mt-0.5">No cloud escalation required. Serving from Edge Swarm.</p>
         </div>
-        <span className="badge badge-low flex-shrink-0">Safe</span>
+        <span className="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+          Local Decision
+        </span>
       </div>
     );
   }
@@ -44,7 +46,9 @@ export function EscalationBanner({ result }: { result: CaseResult }) {
         <div className="ml-10">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-rose-400 font-black text-sm tracking-wider uppercase">ESCALATED</span>
-            <span className="badge badge-severe">Cloud Executive Active</span>
+            <span className={`badge ${result.cloud_connected ? 'badge-severe' : 'bg-slate-700 text-slate-300'}`}>
+              {result.cloud_connected ? 'Cloud-Enhanced Decision' : 'Local Decision (Offline Mode)'}
+            </span>
             {plan?.referral_priority && (
               <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
                 {plan.referral_priority} priority

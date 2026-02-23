@@ -13,8 +13,10 @@ class CloudSettings(BaseSettings):
     hf_api_token: str = ""                # HF API token
     hf_model_id: str = "google/medgemma-27b-it"  # default model
 
-    # AWS SageMaker (Alternative to HF Endpoint)
-    sagemaker_endpoint_name: str = ""     # e.g. medgemma-27b-endpoint
+    # AWS SageMaker Endpoints
+    sm_27b_endpoint: str = "matrix-medgemma-27b-prod"
+    sm_4b_endpoint: str = "matrix-medgemma-4b-prod"
+    sm_paligemma_endpoint: str = "matrix-paligemma-3b-prod"
     aws_region: str = "us-east-1"
 
     # Ollama fallback (local)
@@ -25,6 +27,7 @@ class CloudSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 @lru_cache()

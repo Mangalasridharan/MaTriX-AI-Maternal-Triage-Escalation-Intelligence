@@ -191,6 +191,27 @@ WHO_GUIDELINE_CHUNKS = [
             "Transfer in left lateral position. Provide full clinical summary and current drug chart to receiving unit."
         ),
     },
+    {
+        "source": "ACOG Practice Bulletin No. 222 — Gestational Hypertension and Preeclampsia",
+        "text": (
+            "Expectant management is recommended for women with gestational hypertension or preeclampsia without severe features until 37 0/7 weeks of gestation. "
+            "For women with severe features, delivery is recommended at or beyond 34 0/7 weeks."
+        ),
+    },
+    {
+        "source": "ACOG Practice Bulletin No. 222 — Magnesium Sulfate Toxicity",
+        "text": (
+            "In the event of magnesium sulfate toxicity (e.g., loss of deep tendon reflexes, respiratory depression, or cardiac arrest), "
+            "the infusion should be stopped and intravenous calcium gluconate (10% solution, 10-20 mL over 3 minutes) should be administered."
+        ),
+    },
+    {
+        "source": "WHO 2011 — Severe Anaemia in Pregnancy",
+        "text": (
+            "Severe anaemia (Hb < 7.0 g/dL) is a significant risk factor for maternal morbidity and mortality. "
+            "It must be corrected aggressively, particularly near term, via oral or intravenous iron therapy or blood transfusion if Hb < 5.0 g/dL or signs of failure."
+        ),
+    },
 ]
 
 

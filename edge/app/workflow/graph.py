@@ -36,8 +36,12 @@ async def escalation_node(state: MaternalState) -> MaternalState:
             )
             resp.raise_for_status()
             state["executive_output"] = resp.json()
+            state["cloud_connected"] = True
+            state["mode"] = "online"
     except Exception as exc:
         # Cloud service unavailable — set fallback executive output
+        state["cloud_connected"] = False
+        state["mode"] = "offline"
         state["executive_output"] = {
             "executive_summary": (
                 "Cloud executive service unavailable. "
@@ -107,6 +111,8 @@ async def run_workflow(patient_data: dict) -> dict:
         "escalation_triggered": False,
         "escalation_reason": "",
         "executive_output": None,
+        "cloud_connected": False,
+        "mode": "offline",
         "error": None,
     }
     return await maternal_graph.ainvoke(initial_state)

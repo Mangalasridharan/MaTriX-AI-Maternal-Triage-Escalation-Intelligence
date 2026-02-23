@@ -12,7 +12,7 @@
    - Refine the self-correction logic based on professional feedback.
 
 4. **Offline Mobile Port**
-   - Convert the Next.js PWA into a fully compiled React Native application to ensure the UI operates even when disconnected from the clinic network.
+   - Convert the Njs PWAext. into a fully compiled React Native application to ensure the UI operates even when disconnected from the clinic network.
 
 5. **Advanced Predictive Analytics**
    - Implement population-wide risk forecasting using historical triage data to predict outbreak or seasonal maternal health trends.

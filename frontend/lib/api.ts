@@ -50,6 +50,8 @@ export interface CaseResult {
   escalated: boolean;
   escalation_reason?: string;
   executive_output?: ExecutivePlan;
+  cloud_connected: boolean;
+  mode: string;
   submitted_at: string;
 }
 
@@ -136,6 +138,11 @@ export const apiClient = {
   /** BP trend */
   getBpHistory: async (patientId: string): Promise<BpPoint[]> => {
     const { data } = await http.get<BpPoint[]>(`/api/bp_history/${patientId}`);
+    return data;
+  },
+  /** Vision */
+  analyzeVision: async (imageData: string, prompt?: string) => {
+    const { data } = await http.post("/api/triage/vision", { image_data: imageData, prompt });
     return data;
   },
 };
