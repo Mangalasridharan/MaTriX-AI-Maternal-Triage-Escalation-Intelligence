@@ -149,13 +149,13 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-15 lg:grid-cols-20 gap-2">
+        <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-[repeat(20,minmax(0,1fr))] gap-1.5 sm:gap-2">
            {/* Generate 100 cells for the visual effect */}
            {Array.from({ length: 100 }).map((_, i) => {
              const randomVal = Math.random();
              const color = randomVal > 0.9 ? 'bg-rose-500/60' : randomVal > 0.7 ? 'bg-amber-500/40' : randomVal > 0.4 ? 'bg-cyan-500/20' : 'bg-white/[0.03]';
              return (
-               <div key={i} className={`aspect-square rounded-[4px] transition-all hover:scale-125 cursor-help ${color} border border-white/5`} 
+               <div key={i} className={`aspect-square rounded-[2px] sm:rounded-[4px] transition-all hover:scale-125 cursor-help ${color} border border-white/5`} 
                  title={`Region Vector ${i} - Risk Scale: ${Math.round(randomVal * 100)}%`} />
              );
            })}

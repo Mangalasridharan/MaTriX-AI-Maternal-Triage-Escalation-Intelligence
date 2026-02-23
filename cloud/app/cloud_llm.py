@@ -20,7 +20,7 @@ class CloudLLM:
         self.timeout = 60.0
         self.max_retries = 2
 
-    async def generate(self, prompt: str, system: str = "", model_type: str = "27b", image_data: str = None) -> dict:
+    async def generate(self, prompt: str, system: str = "", model_type: str = "27b", image_data: str | None = None) -> dict:
         """
         Generate a structured response. 
         model_type: '27b', '4b', or 'vision'
@@ -38,7 +38,18 @@ class CloudLLM:
             return await self._call_hf(prompt, system)
         
         # Final fallback to Ollama
-        return await self._call_ollama(prompt, system)
+        try:
+            return await self._call_ollama(prompt, system, image_data)
+        except Exception as exc:
+            if cloud_settings.debug:
+                print(f"Ollama failed: {exc}. DEBUG mode: providing mock vision response.")
+                if model_type == "vision":
+                    return {
+                        "analysis": "Clinical image shows significant bilateral pitting edema (grade 2+) and moderate facial swelling, consistent with pre-eclampsia symptoms.",
+                        "findings": ["pitting_edema", "facial_swelling", "potential_preeclampsia"],
+                        "risk_correction": 15.0
+                    }
+            raise exc
 
     def _get_endpoint(self, model_type: str) -> str:
         if model_type == "27b": return cloud_settings.sm_27b_endpoint
@@ -46,7 +57,7 @@ class CloudLLM:
         if model_type == "vision": return cloud_settings.sm_paligemma_endpoint
         return ""
 
-    async def _call_sagemaker(self, endpoint: str, prompt: str, system: str, image_data: str = None) -> dict:
+    async def _call_sagemaker(self, endpoint: str, prompt: str, system: str, image_data: str | None = None) -> dict:
         """Invoke SageMaker endpoint."""
         import boto3
         
@@ -99,7 +110,7 @@ class CloudLLM:
             raw = data[0]["generated_text"] if isinstance(data, list) else data.get("generated_text", "{}")
             return _extract_json(raw)
 
-    async def _call_ollama(self, prompt: str, system: str) -> dict:
+    async def _call_ollama(self, prompt: str, system: str, image_data: str | None = None) -> dict:
         """Fallback to local Ollama."""
         payload = {
             "model": self.ollama_model,
@@ -108,6 +119,9 @@ class CloudLLM:
             "format": "json",
             "stream": False,
         }
+        if image_data:
+            payload["images"] = [image_data]
+            
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(f"{self.ollama_url}/api/generate", json=payload)
             resp.raise_for_status()

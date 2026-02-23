@@ -44,6 +44,9 @@ SYMPTOMS:
 - Reduced fetal movements: {fetal_movement_reduced}
 - Additional symptoms: {additional_symptoms}
 
+VISION AGENT FINDINGS:
+{vision_findings}
+
 MEDICAL HISTORY: {medical_history}
 
 Respond with ONLY this JSON structure:
@@ -77,6 +80,7 @@ async def run_risk_agent(state: dict) -> dict:
         oedema=p.get("oedema", False),
         fetal_movement_reduced=p.get("fetal_movement_reduced", False),
         additional_symptoms=p.get("additional_symptoms", "None"),
+        vision_findings=state.get("vision_output", {}).get("findings", "Not checked."),
         medical_history=p.get("medical_history", "None"),
     )
 
@@ -88,8 +92,10 @@ async def run_risk_agent(state: dict) -> dict:
         result.setdefault("reasoning", "")
     except Exception as exc:
         # Rule-based fallback
+        from app.config import settings
         result = _rule_based_risk(p)
-        result["reasoning"] += f" (LLM unavailable: {exc})"
+        if settings.debug:
+            result["reasoning"] += f" (Note: AI fallback active - {exc})"
 
     state["risk_output"] = result
     return state

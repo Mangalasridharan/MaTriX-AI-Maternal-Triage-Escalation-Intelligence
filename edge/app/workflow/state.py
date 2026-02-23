@@ -11,6 +11,7 @@ class MaternalState(TypedDict):
     visit_id: Optional[int]
 
     # Agent outputs
+    vision_output: Optional[dict]
     risk_output: Optional[dict]
     guideline_output: Optional[dict]
     critique_output: Optional[dict]

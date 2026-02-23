@@ -38,7 +38,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-full px-6 py-3 backdrop-blur-md">
            <Activity size={16} className="text-cyan-400 animate-pulse" />
-           <span className="font-mono text-xs text-white/60 tracking-widest whitespace-nowrap">LOCAL INFERENCE AGENT ACTIVE</span>
+           <span className="font-mono text-xs text-white/60 tracking-widest whitespace-nowrap">MULTIMODAL SWARM ACTIVE</span>
         </div>
       </header>
 

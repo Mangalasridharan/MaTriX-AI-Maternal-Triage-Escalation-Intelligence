@@ -39,6 +39,11 @@ export function EscalationBanner({ result }: { result: CaseResult }) {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h3 className="text-xl font-bold tracking-tight text-white drop-shadow-md">CLOUD ESCALATION</h3>
+                {result.mode === "offline" && (
+                  <span className="px-3 py-1 rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/30 text-[10px] uppercase tracking-widest font-bold">
+                    Offline Fallback
+                  </span>
+                )}
                 {plan?.referral_priority && (
                   <span className="px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] uppercase tracking-widest font-bold">
                     {plan.referral_priority} Priority

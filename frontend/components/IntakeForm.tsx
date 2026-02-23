@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { apiClient, CaseSubmission } from "@/lib/api";
-import { User, Activity, Stethoscope, ChevronRight, ChevronLeft, AlertCircle, Check } from "lucide-react";
+import { User, Activity, Stethoscope, ChevronRight, ChevronLeft, AlertCircle, Check, Camera, Image as ImageIcon, X } from "lucide-react";
 
 /* ── 3-Step Wizard Form ────────────────────────────────────────────
    Step 1: Patient Info   (User icon)
@@ -14,6 +14,7 @@ const STEPS = [
   { id: 1, label: "Patient",  icon: User },
   { id: 2, label: "Vitals",   icon: Activity },
   { id: 3, label: "Symptoms", icon: Stethoscope },
+  { id: 4, label: "Vision",   icon: Camera },
 ];
 
 const SYMPTOM_LIST = [
@@ -49,9 +50,21 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
   const [protein, setProtein] = useState("none");
 
   const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [image, setImage]       = useState<string | null>(null);
 
   const toggleSym = (k: string) =>
     setSymptoms((s) => s.includes(k) ? s.filter((x) => x !== k) : [...s, k]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const canNext = () => {
     if (step === 1) return name && age && ga;
@@ -66,6 +79,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
         name, age: +age, gestational_age_weeks: +ga, notes: notes || undefined,
         vitals: { systolic: +sys, diastolic: +dia, heart_rate: hr ? +hr : undefined, proteinuria: protein },
         symptoms,
+        image_data: image || undefined,
       };
       onResult(await apiClient.submitCase(payload));
     } catch (e: any) {
@@ -210,6 +224,45 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
         </div>
       )}
 
+      {/* ── Step 4: Vision Scan ── */}
+      {step === 4 && (
+        <div className="space-y-6 pt-2 tab-panel">
+          <div className="flex flex-col items-center text-center space-y-2">
+            <p className="label-sm text-violet-400">Vision Agent Analysis</p>
+            <p className="text-xs text-slate-500 max-w-[240px]">Upload an image of symptoms (e.g. pitting edema) for PaliGemma 3B VQA analysis.</p>
+          </div>
+
+          {!image ? (
+            <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-3xl h-48 cursor-pointer hover:border-violet-500/40 hover:bg-white/[0.02] transition-all group">
+              <ImageIcon size={32} className="text-slate-600 group-hover:text-violet-400 transition-colors mb-3" />
+              <span className="text-sm font-medium text-slate-500 group-hover:text-slate-300">Click to upload photo</span>
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+            </label>
+          ) : (
+            <div className="relative group rounded-3xl overflow-hidden border border-white/10 aspect-video bg-black flex items-center justify-center">
+               <img src={image} alt="Clinical preview" className="max-h-full object-contain" />
+               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                  <button onClick={() => setImage(null)} className="p-3 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors">
+                    <X size={20} />
+                  </button>
+               </div>
+            </div>
+          )}
+
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="w-4 h-4 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center">
+                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                </div>
+                <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase">Multimodal swarm enabled</span>
+             </div>
+             <p className="text-[11px] text-slate-500 leading-relaxed font-light">
+                Vision findings will be automatically injected into the Risk Agent's reasoning context.
+             </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Error ── */}
       {error && (
         <div className="text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">{error}</div>
@@ -222,7 +275,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
             <ChevronLeft size={15} /> Back
           </button>
         )}
-        {step < 3 ? (
+        {step < 4 ? (
           <button onClick={() => setStep(step + 1)} disabled={!canNext()}
             className="btn-primary flex-1">
             Continue <ChevronRight size={15} className="ml-auto" />

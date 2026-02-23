@@ -24,6 +24,7 @@ async def verify_api_key(x_api_key: str = Header(..., description="Edge system A
 
 class EscalationRequest(BaseModel):
     patient_data: dict
+    vision_output: Optional[dict] = None
     risk_output: dict
     guideline_output: dict
 
@@ -41,7 +42,7 @@ class ExecutiveResponse(BaseModel):
 
 class VisionRequest(BaseModel):
     image_data: str  # Base64 or URL
-    prompt: str
+    prompt: str = "Analyze clinical imagery for obstetric risks."
 
 
 class VisionResponse(BaseModel):
@@ -69,9 +70,10 @@ async def vision_analysis(payload: VisionRequest):
     """PaliGemma 3B Vision Agent."""
     from app.cloud_llm import cloud_llm
     result = await cloud_llm.generate(
-        prompt=f"Analyze image: {payload.prompt}",
-        system="You are a clinical vision specialist. Identify obstetric risks in visual data.",
-        model_type="vision"
+        prompt=payload.prompt,
+        system="You are a clinical vision specialist. Identify obstetric risks in visual data (e.g. edema, jaundice). Provide a JSON response with 'analysis' (text) and 'findings' (list).",
+        model_type="vision",
+        image_data=payload.image_data
     )
     return {
         "analysis": result.get("analysis", "Vision processing complete."),

@@ -15,6 +15,7 @@ export interface CaseSubmission {
   notes?: string;
   vitals: Vitals;
   symptoms: string[];
+  image_data?: string;
 }
 
 export interface RiskResult {
@@ -45,6 +46,7 @@ export interface ExecutivePlan {
 export interface CaseResult {
   visit_id: string;
   patient_name: string;
+  vision_output?: any;
   risk_output: RiskResult;
   guideline_output: GuidelineResult;
   escalated: boolean;

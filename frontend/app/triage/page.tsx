@@ -8,6 +8,7 @@ import { RiskCard } from "@/components/triage/RiskCard";
 import { GuidelinePanel } from "@/components/triage/GuidelinePanel";
 import { EscalationBanner } from "@/components/triage/EscalationBanner";
 import { AgenticSwarmVisualizer } from "@/components/triage/AgenticSwarmVisualizer";
+import { VisionResultCard } from "@/components/triage/VisionResultCard";
 
 export default function TriagePage() {
   const [result, setResult]     = useState<CaseResult | null>(null);
@@ -29,7 +30,7 @@ export default function TriagePage() {
       <div className="mb-6">
         <h1 className="heading-lg">Maternal Triage</h1>
         <p className="text-slate-500 text-sm mt-1">
-          MedGemma 4B (edge) · WHO RAG · 27B Cloud Escalation
+          Vision Agent (PaliGemma) · Edge Logic (4B) · Cloud Executive (27B)
         </p>
       </div>
 
@@ -44,7 +45,7 @@ export default function TriagePage() {
         {/* Results — right */}
         <div className="xl:col-span-8 space-y-5">
           {(isLoading || result) && (
-            <AgenticSwarmVisualizer active={isLoading} />
+            <AgenticSwarmVisualizer active={isLoading} completed={!!result} />
           )}
 
           {!result && !isLoading && (
@@ -59,7 +60,10 @@ export default function TriagePage() {
 
           {result && !isLoading && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
-              <RiskCard risk={result.risk_output} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                 <RiskCard risk={result.risk_output} />
+                 <VisionResultCard result={result.vision_output} />
+              </div>
               <EscalationBanner result={result} />
               <GuidelinePanel guide={result.guideline_output} />
             </div>

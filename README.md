@@ -1,6 +1,10 @@
-# MaTriX-AI Setup & Operations Guide
+# MaTriX-AI: 4-Agent Multimodal Maternal Swarm
 
-This guide will walk you through starting the multi-agent maternal triage system locally. Ensure you have Node.js and Python 3.13 installed.
+Hybrid Edge–Cloud Triage System (PaliGemma + MedGemma)
+
+## Quick Start (Windows)
+
+If you are on Windows, simply run **`run_matrix.bat`** from the root directory. It will handle environment setup, dependencies, Docker, seeding, and launch all services in separate windows for you.
 
 ## Prerequisites
 

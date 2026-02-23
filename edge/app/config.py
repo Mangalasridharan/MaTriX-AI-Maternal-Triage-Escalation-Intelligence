@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
 
     # Clinic shared password (nurse login)
-    clinic_password: str = "changeme123"
+    clinic_password: str = "demo1234"
 
     class Config:
         env_file = ".env"

@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 import { apiClient, CaseSubmission } from "@/lib/api";
-import { User, Activity, Stethoscope, ChevronRight, ChevronLeft, AlertCircle, Check, Cpu } from "lucide-react";
+import { User, Activity, Stethoscope, ChevronRight, ChevronLeft, AlertCircle, Check, Cpu, Upload, X, ImageIcon } from "lucide-react";
 
 const SYMPTOM_LIST = [
   { key: "headache",               label: "Severe Headache",           danger: true  },
@@ -36,6 +36,39 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [visionResult, setVisionResult] = useState<any>(null);
   const [isVisionLoading, setIsVisionLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setImagePreview(base64String);
+      // Strip prefix for API if needed, but usually the whole data URL is fine if the backend handles it.
+      // Our backend says "base64", let's provide the raw base64 part.
+      setSelectedImage(base64String.split(',')[1]); 
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const runVisionAnalysis = async () => {
+    if (!selectedImage || isVisionLoading) return;
+    setIsVisionLoading(true);
+    setError("");
+    try {
+      const res = await apiClient.analyzeVision(selectedImage, "Analyze this maternal clinical image for signs of risk such as edema, blood loss, or anomalies.");
+      setVisionResult(res);
+    } catch (e) {
+      setError("Vision analysis failed. Ensure Cloud service (PaliGemma) is online.");
+    } finally {
+      setIsVisionLoading(false);
+    }
+  };
 
   const toggleSym = (k: string) =>
     setSymptoms((s) => s.includes(k) ? s.filter((x) => x !== k) : [...s, k]);
@@ -57,6 +90,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
         name, age: +age, gestational_age_weeks: +ga, notes: notes || undefined,
         vitals: { systolic: +sys, diastolic: +dia, heart_rate: hr ? +hr : undefined, proteinuria: protein },
         symptoms,
+        image_data: selectedImage || undefined,
       };
       onResult(await apiClient.submitCase(payload));
     } catch (e: any) {
@@ -116,7 +150,7 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
             {sys && +sys >= 140 && (
               <div className="flex justify-center animate-in fade-in zoom-in duration-500">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-sm">
-                  <AlertCircle size={14} /> Elevated Blood Pressure Detected
+                   <AlertCircle size={14} /> Elevated Blood Pressure Detected
                 </div>
               </div>
             )}
@@ -172,54 +206,91 @@ export function IntakeForm({ onResult, isLoading, setIsLoading }: Props) {
             
             <div className="bg-black/40 border border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center">
                <div className="w-16 h-16 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(139,92,246,0.15)]">
-                 <Cpu className="text-violet-400" size={28} />
+                 <ImageIcon className="text-violet-400" size={28} />
                </div>
                <h3 className="text-xl font-light text-white mb-2">Upload Clinical Imagery</h3>
                <p className="text-white/40 text-sm max-w-sm mb-8 leading-relaxed">
-                 Inject visual context directly into the edge pipeline. <b>PaliGemma 3B (Offline VLM)</b> will estimate blood loss volumes from pads, or detect extreme edema.
+                 Inject visual context directly into the edge pipeline. <b>PaliGemma 3B (Cloud VLM)</b> will analyze edema or estimate risk from visual signs.
                </p>
                
-               <div 
-                 onClick={async () => {
-                   if (isVisionLoading) return;
-                   setIsVisionLoading(true);
-                   try {
-                     const res = await apiClient.analyzeVision("fake_base64_data", "Analyze for maternal risk signs like blood loss or edema.");
-                     setVisionResult(res);
-                   } catch (e) {
-                     setError("Vision analysis failed. Ensure Cloud service is online.");
-                   } finally {
-                     setIsVisionLoading(false);
-                   }
-                 }}
-                 className={`w-full max-w-sm border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer group flex flex-col items-center
-                   ${isVisionLoading ? 'border-cyan-500 bg-cyan-500/10 cursor-wait' : 'border-white/20 hover:border-violet-500/50 hover:bg-violet-500/5'}`}>
-                  {isVisionLoading ? (
-                    <div className="flex flex-col items-center gap-2">
-                       <span className="text-cyan-400 font-mono text-[10px] animate-pulse">PaliGemma 3B Processing...</span>
-                    </div>
-                  ) : (
-                    <span className="text-white/50 group-hover:text-violet-300 font-mono text-xs uppercase tracking-widest">+ Select Image for PaliGemma</span>
-                  )}
-               </div>
+               <input 
+                 type="file" 
+                 ref={fileInputRef} 
+                 onChange={handleImageSelect} 
+                 accept="image/*" 
+                 className="hidden" 
+               />
+
+               {!imagePreview ? (
+                 <div 
+                   onClick={() => fileInputRef.current?.click()}
+                   className="w-full max-w-sm border-2 border-dashed border-white/10 rounded-2xl p-10 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all cursor-pointer group flex flex-col items-center gap-4">
+                   <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+                     <Upload className="text-white/30 group-hover:text-violet-400" size={20} />
+                   </div>
+                   <div className="space-y-1">
+                     <p className="text-white/60 font-medium">Click to select image</p>
+                     <p className="text-white/20 text-[10px] uppercase tracking-widest font-mono">PNG, JPG up to 10MB</p>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="w-full max-w-md space-y-4">
+                   <div className="relative group rounded-2xl overflow-hidden border border-white/10 bg-black/50">
+                     <img src={imagePreview} alt="Preview" className="w-full h-48 object-contain" />
+                     <button 
+                       onClick={() => { setImagePreview(null); setSelectedImage(null); setVisionResult(null); }}
+                       className="absolute top-2 right-2 p-2 rounded-full bg-black/60 text-white/70 hover:text-white hover:bg-rose-500 transition-all opacity-0 group-hover:opacity-100">
+                       <X size={16} />
+                     </button>
+                   </div>
+                   
+                   {!visionResult && (
+                     <button
+                       onClick={runVisionAnalysis}
+                       disabled={isVisionLoading}
+                       className={`w-full py-4 rounded-xl font-mono text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all
+                         ${isVisionLoading 
+                           ? 'bg-cyan-500/20 text-cyan-400 cursor-wait' 
+                           : 'bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_20px_rgba(124,58,237,0.3)]'}`}>
+                       {isVisionLoading ? (
+                         <>
+                           <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                           PaliGemma Analyzing...
+                         </>
+                       ) : (
+                         <>
+                           <Cpu size={14} /> Run PaliGemma Vision Analysis
+                         </>
+                       )}
+                     </button>
+                   )}
+                 </div>
+               )}
 
                {visionResult && (
-                 <div className="mt-8 p-6 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-left animate-in zoom-in duration-500">
-                    <h4 className="text-violet-400 font-mono text-[10px] uppercase tracking-widest mb-2">VLM Analysis Output</h4>
-                    <p className="text-white/80 text-sm font-light leading-relaxed italic">"{visionResult.analysis}"</p>
+                 <div className="mt-6 w-full max-w-md p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 text-left animate-in zoom-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-emerald-400 font-mono text-[10px] uppercase tracking-widest">VLM Analysis Result</h4>
+                      <div className="h-1 w-1 rounded-full bg-emerald-400 shadow-[0_0_5px_#10b981]" />
+                    </div>
+                    <p className="text-white/90 text-sm font-light leading-relaxed italic">
+                      "{visionResult.analysis || visionResult.summary}"
+                    </p>
                     {visionResult.findings?.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {visionResult.findings.map((f: string, i: number) => (
-                          <span key={i} className="px-2 py-1 rounded bg-white/5 text-white/40 text-[10px] border border-white/5">{f}</span>
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-emerald-400/10 text-emerald-300 text-[9px] border border-emerald-400/10 font-mono uppercase tracking-tighter">
+                            {f}
+                          </span>
                         ))}
                       </div>
                     )}
                  </div>
                )}
                
-               <div className="mt-6 flex justify-center">
-                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono uppercase tracking-widest">
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Edge-to-Cloud Bridge Active
+               <div className="mt-8 flex justify-center">
+                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/5 bg-white/[0.02] text-white/30 text-[9px] font-mono uppercase tracking-widest">
+                   {isVisionLoading ? "Synchronizing Cloud..." : "Standard Vision Buffer Idle"}
                  </div>
                </div>
             </div>

@@ -86,6 +86,7 @@ async def submit_case(
         "oedema": "oedema" in payload.symptoms,
         "fetal_movement_reduced": "fetal_movement_reduced" in payload.symptoms,
         "notes": payload.notes,
+        "image_data": payload.image_data,
     }
 
     try:
@@ -117,6 +118,7 @@ async def submit_case(
         visit_id=visit.id,
         patient_name=payload.name,
         submitted_at=datetime.utcnow(),
+        vision_output=state.get("vision_output"),
         risk_output=risk,
         guideline_output={
             **guide,

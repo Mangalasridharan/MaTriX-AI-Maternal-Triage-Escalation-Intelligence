@@ -1,12 +1,19 @@
 "use client";
 import { useState } from "react";
-import { Cpu, Cloud, Settings, Key, Save, Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Cpu, Cloud, Settings, Key, Save, Info, LogOut } from "lucide-react";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [clinicName, setClinicName]   = useState("My Clinic");
   const [edgeUrl, setEdgeUrl]         = useState("http://localhost:8000");
   const [cloudUrl, setCloudUrl]       = useState("http://localhost:9000");
   const [saved, setSaved]             = useState(false);
+
+  const handleSignOut = () => {
+    localStorage.removeItem("matrix_token");
+    router.push("/login");
+  };
 
   const save = () => {
     if (typeof window !== "undefined") {
@@ -97,6 +104,23 @@ export default function SettingsPage() {
         <Key size={18} className="flex-shrink-0 mt-0.5 text-amber-400" />
         <div>
           JWT secret keys and API routing tokens are securely loaded from <code className="font-mono bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-300">edge/.env</code> and <code className="font-mono bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-300">cloud/.env</code> via Edge Node environment variables. They are not stored in browser session memory.
+        </div>
+      </div>
+
+      <div className="spatial-panel p-8 md:p-10 hover:border-rose-500/30 transition-all duration-500">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center">
+              <LogOut size={24} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-light text-white">User Session</h3>
+              <p className="text-sm font-light text-white/40">Terminate current clinic session</p>
+            </div>
+          </div>
+          <button onClick={handleSignOut} className="px-8 py-3 rounded-xl border border-rose-500/30 text-rose-400 text-sm font-mono tracking-widest hover:bg-rose-500/10 transition-all">
+            SIGN OUT
+          </button>
         </div>
       </div>
 

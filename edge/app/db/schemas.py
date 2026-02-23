@@ -20,6 +20,7 @@ class CaseSubmission(BaseModel):
     age: int = Field(..., ge=10, le=60)
     gestational_age_weeks: int = Field(..., ge=4, le=45)
     notes: Optional[str] = None
+    image_data: Optional[str] = Field(None, description="Base64 encoded clinical imagery")
 
     # Vitals (primary reading)
     vitals: VitalReading
@@ -75,6 +76,7 @@ class CaseResult(BaseModel):
     visit_id: str
     patient_name: str
     submitted_at: datetime
+    vision_output: Optional[dict] = None
     risk_output: RiskResult
     guideline_output: GuidelineResult
     escalated: bool

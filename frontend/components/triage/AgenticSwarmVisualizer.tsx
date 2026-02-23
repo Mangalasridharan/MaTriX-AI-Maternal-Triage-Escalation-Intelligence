@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Cpu, BookOpen, Route, CloudLightning, ShieldCheck, CheckCircle2, Circle, TerminalSquare } from "lucide-react";
+import { Cpu, BookOpen, Camera, CloudLightning, ShieldCheck, CheckCircle2, Circle, TerminalSquare } from "lucide-react";
 
 interface Step {
   id: string;
@@ -12,26 +12,32 @@ interface Step {
   logs: string[];
 }
 
-export function AgenticSwarmVisualizer({ active }: { active: boolean }) {
+export function AgenticSwarmVisualizer({ active, completed }: { active: boolean; completed?: boolean }) {
   const [activeStepIndex, setActiveStepIndex] = useState(-1);
   const [logs, setLogs] = useState<string[]>([]);
   
   const [steps, setSteps] = useState<Step[]>([
-    { id: "risk", name: "Risk Agent", desc: "Local MedGemma 4B Analysis", icon: Cpu, status: "pending", logs: [] },
-    { id: "rag", name: "Guideline Agent", desc: "WHO/ACOG RAG Vector Search", icon: BookOpen, status: "pending", logs: [] },
-    { id: "critique", name: "Critique Agent", desc: "Safety verification pass", icon: ShieldCheck, status: "pending", logs: [] },
-    { id: "router", name: "Swarm Router", desc: "Escalation to Cloud 27B?", icon: Route, status: "pending", logs: [] },
+    { id: "vision", name: "Vision Agent", desc: "PaliGemma 3B VQA", icon: Camera, status: "pending", logs: [] },
+    { id: "risk", name: "Risk Agent", desc: "Local MedGemma 4B GGUF", icon: Cpu, status: "pending", logs: [] },
+    { id: "rag", name: "Guideline Agent", desc: "WHO/ACOG RAG Citation", icon: BookOpen, status: "pending", logs: [] },
+    { id: "exec", name: "Executive Agent", desc: "Cloud 27B Care Plan", icon: CloudLightning, status: "pending", logs: [] },
   ]);
 
   useEffect(() => {
     if (!active) {
-      setSteps(s => s.map(step => ({ ...step, status: "pending", latency: undefined })));
-      setActiveStepIndex(-1);
-      setLogs(["[SYSTEM] Swarm standing by..."]);
+      if (completed) {
+        setSteps(s => s.map(step => ({ ...step, status: "done" })));
+        setActiveStepIndex(4);
+        setLogs(prev => [...prev.filter(l => !l.includes("standby")), "[SYSTEM] 4-Agent Multimodal Swarm: SUCCESS"]);
+      } else {
+        setSteps(s => s.map(step => ({ ...step, status: "pending", latency: undefined })));
+        setActiveStepIndex(-1);
+        setLogs(["[SYSTEM] Swarm standing by..."]);
+      }
       return;
     }
 
-    setLogs(["[SYSTEM] Initiating Swarm LangGraph sequence..."]);
+    setLogs(["[SYSTEM] Initiating Multimodal Swarm sequence..."]);
     
     // Simulate Agent progress locally for UI feedback
     let isCancelled = false;
@@ -42,40 +48,40 @@ export function AgenticSwarmVisualizer({ active }: { active: boolean }) {
         if (!isCancelled) setLogs(prev => [...prev, log]);
       };
 
-      // 1. Risk Agent
+      // 1. Vision Agent
       setActiveStepIndex(0);
       setSteps(s => s.map((st, i) => i === 0 ? { ...st, status: "current" } : st));
-      addLog("[EDGE] MedGemma-4B loaded locally. Processing vitals...");
-      await wait(800);
-      addLog("[EDGE] Risk score compiled against heuristical thresholds.");
-      setSteps(s => s.map((st, i) => i === 0 ? { ...st, status: "done", latency: "0.8s" } : st));
-      
-      // 2. RAG
+      addLog("[VISION] Loading PaliGemma 3B... Analyzing clinical image.");
+      await wait(1200);
+      addLog("[VISION] Edema patterns detected. Visual context injected.");
+      setSteps(s => s.map((st, i) => i === 0 ? { ...st, status: "done", latency: "1.2s" } : st));
+
+      // 2. Risk Agent
       setActiveStepIndex(1);
       setSteps(s => s.map((st, i) => i === 1 ? { ...st, status: "current" } : st));
-      addLog("[RAG] Querying vector db (pgvector) for matches...");
-      await wait(600);
-      addLog("[RAG] Cosine similarity: 0.92 matched with WHO Preeclampsia protocols.");
-      setSteps(s => s.map((st, i) => i === 1 ? { ...st, status: "done", latency: "0.6s" } : st));
-
-      // 3. Critique 
+      addLog("[EDGE] MedGemma-4B GGUF executing offline...");
+      await wait(900);
+      addLog("[EDGE] Risk score compiled with visual context.");
+      setSteps(s => s.map((st, i) => i === 1 ? { ...st, status: "done", latency: "0.9s" } : st));
+      
+      // 3. RAG
       setActiveStepIndex(2);
       setSteps(s => s.map((st, i) => i === 2 ? { ...st, status: "current" } : st));
-      addLog("[CRITIQUE] Running medication safety validation.");
-      await wait(700);
-      addLog("[CRITIQUE] All pathways safe. MgSO4 constraints validated.");
-      setSteps(s => s.map((st, i) => i === 2 ? { ...st, status: "done", latency: "0.7s" } : st));
+      addLog("[RAG] Retrieval: Searching WHO Pre-eclampsia guidelines...");
+      await wait(600);
+      addLog("[RAG] Grounding confirmed: NICE NG133 citation retrieved.");
+      setSteps(s => s.map((st, i) => i === 2 ? { ...st, status: "done", latency: "0.6s" } : st));
 
-      // 4. Router
+      // 4. Executive
       setActiveStepIndex(3);
       setSteps(s => s.map((st, i) => i === 3 ? { ...st, status: "current" } : st));
-      addLog("[ROUTER] Evaluating case severity against Cloud constraints...");
-      await wait(400);
-      addLog("[ROUTER] Threshold met. Synthesizing data graph...");
-      setSteps(s => s.map((st, i) => i === 3 ? { ...st, status: "done", latency: "0.4s" } : st));
+      addLog("[CLOUD] Escalating to MedGemma 27B for executive synthesis...");
+      await wait(1500);
+      addLog("[CLOUD] Strategy generated: Refer to Level 3 Facility.");
+      setSteps(s => s.map((st, i) => i === 3 ? { ...st, status: "done", latency: "1.5s" } : st));
       
       setActiveStepIndex(4); // All done
-      addLog("[SYSTEM] Swarm orchestration complete.");
+      addLog("[SYSTEM] 4-Agent Multimodal Swarm complete.");
     };
 
     sequence();

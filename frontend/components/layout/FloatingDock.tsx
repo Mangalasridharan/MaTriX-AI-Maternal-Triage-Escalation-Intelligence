@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Activity, Stethoscope, Clock, BarChart3, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Activity, Stethoscope, Clock, BarChart3, Settings, LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: "Overview", href: "/dashboard", icon: Activity },
@@ -12,6 +12,12 @@ const NAV_ITEMS = [
 
 export function FloatingDock() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    localStorage.removeItem("matrix_token");
+    router.push("/login");
+  };
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
@@ -43,11 +49,16 @@ export function FloatingDock() {
         {/* Separator */}
         <div className="w-[1px] h-8 bg-white/10 mx-1" />
         
-        {/* Settings / Profile */}
+        {/* Settings */}
         <Link href="/settings" className={`relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 overflow-hidden group
           ${pathname === "/settings" ? "text-white bg-white/[0.08]" : "text-white/40 hover:text-white hover:bg-white/[0.04]"}`}>
-          <Settings size={20} className="transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110" />
+          <Settings size={18} className="transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110" />
         </Link>
+        
+        {/* Sign Out */}
+        <button onClick={handleSignOut} className="relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 overflow-hidden group text-white/40 hover:text-rose-400 hover:bg-rose-500/10">
+          <LogOut size={18} className="transition-transform duration-300 group-hover:scale-110" />
+        </button>
       </nav>
     </div>
   );
