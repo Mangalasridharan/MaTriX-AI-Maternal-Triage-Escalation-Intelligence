@@ -18,6 +18,7 @@ MODEL_CONFIGS = {
             "HF_MODEL_QUANTIZE": "bitsandbytes",
             "MAX_INPUT_LENGTH": "2048",
             "MAX_TOTAL_TOKENS": "4096",
+            "HF_TRUST_REMOTE_CODE": "true",
         },
         "instance_type": "ml.g5.12xlarge",
         "endpoint_name": "matrix-medgemma-27b-prod"
@@ -29,6 +30,7 @@ MODEL_CONFIGS = {
             "HF_MODEL_QUANTIZE": "bitsandbytes",
             "MAX_INPUT_LENGTH": "2048",
             "MAX_TOTAL_TOKENS": "4096",
+            "HF_TRUST_REMOTE_CODE": "true",
         },
         "instance_type": "ml.g5.2xlarge",
         "endpoint_name": "matrix-medgemma-4b-prod"
@@ -40,6 +42,7 @@ MODEL_CONFIGS = {
             "HF_MODEL_QUANTIZE": "bitsandbytes",
             "MAX_INPUT_LENGTH": "1024",
             "MAX_TOTAL_TOKENS": "2048",
+            "HF_TRUST_REMOTE_CODE": "true",
         },
         "instance_type": "ml.g5.2xlarge",
         "endpoint_name": "matrix-paligemma-3b-prod"
@@ -69,8 +72,8 @@ def deploy_model(model_key):
     # Boto3 Client
     sm_client = boto3.client("sagemaker", region_name=region)
 
-    # Image URI (TGI 1.1.0)
-    image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.0.1-tgi1.1.0-gpu-py39-cu118-ubuntu20.04"
+    # Image URI (TGI 2.0.1+ supporting Gemma and PaliGemma)
+    image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi2.0.1-gpu-py310-cu121-ubuntu22.04"
 
     print(f"--- Deploying {model_key} to AWS SageMaker ---")
     print(f"Model ID: {hub_config.get('HF_MODEL_ID')}")
