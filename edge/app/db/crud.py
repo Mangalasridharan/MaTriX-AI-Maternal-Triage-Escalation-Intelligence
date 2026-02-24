@@ -11,14 +11,18 @@ def _uid():
 
 # ── Patient ───────────────────────────────────────────────────────────────────
 
-async def get_or_create_patient(db: AsyncSession, name: str, age: int,
+async def get_or_create_patient(db: AsyncSession, clinic_id: str, name: str, age: int,
                                 gestational_age_weeks: int) -> Patient:
     result = await db.execute(
-        select(Patient).where(Patient.name == name, Patient.age == age)
+        select(Patient).where(
+            Patient.clinic_id == clinic_id,
+            Patient.name == name,
+            Patient.age == age
+        )
     )
     patient = result.scalars().first()
     if not patient:
-        patient = Patient(id=_uid(), name=name, age=age,
+        patient = Patient(id=_uid(), clinic_id=clinic_id, name=name, age=age,
                           gestational_age_weeks=gestational_age_weeks)
         db.add(patient)
         await db.flush()
@@ -27,10 +31,10 @@ async def get_or_create_patient(db: AsyncSession, name: str, age: int,
 
 # ── Visit + Vitals + Symptoms ─────────────────────────────────────────────────
 
-async def create_visit(db: AsyncSession, patient_id: str,
+async def create_visit(db: AsyncSession, clinic_id: str, patient_id: str,
                        vitals_data: dict, symptoms_list: list[str],
                        notes: str | None) -> Visit:
-    visit = Visit(id=_uid(), patient_id=patient_id,
+    visit = Visit(id=_uid(), clinic_id=clinic_id, patient_id=patient_id,
                   visit_date=datetime.utcnow(), notes=notes)
     db.add(visit)
     await db.flush()
@@ -100,12 +104,13 @@ async def save_escalation_log(db: AsyncSession, visit_id: str, state: dict) -> E
 
 # ── History ───────────────────────────────────────────────────────────────────
 
-async def list_history(db: AsyncSession, skip: int = 0, limit: int = 50) -> list:
+async def list_history(db: AsyncSession, clinic_id: str, skip: int = 0, limit: int = 50) -> list:
     result = await db.execute(
         select(Visit, Patient, RiskOutput, EscalationLog)
         .join(Patient, Visit.patient_id == Patient.id)
         .outerjoin(RiskOutput, RiskOutput.visit_id == Visit.id)
         .outerjoin(EscalationLog, EscalationLog.visit_id == Visit.id)
+        .where(Visit.clinic_id == clinic_id)
         .order_by(desc(Visit.visit_date))
         .offset(skip).limit(limit)
     )
@@ -122,14 +127,14 @@ async def list_history(db: AsyncSession, skip: int = 0, limit: int = 50) -> list
     return items
 
 
-async def get_case(db: AsyncSession, visit_id: str) -> dict | None:
+async def get_case(db: AsyncSession, clinic_id: str, visit_id: str) -> dict | None:
     result = await db.execute(
         select(Visit, Patient, RiskOutput, GuidelineOutput, EscalationLog)
         .join(Patient, Visit.patient_id == Patient.id)
         .outerjoin(RiskOutput, RiskOutput.visit_id == Visit.id)
         .outerjoin(GuidelineOutput, GuidelineOutput.visit_id == Visit.id)
         .outerjoin(EscalationLog, EscalationLog.visit_id == Visit.id)
-        .where(Visit.id == visit_id)
+        .where(Visit.id == visit_id, Visit.clinic_id == clinic_id)
     )
     row = result.first()
     if not row:
@@ -138,12 +143,12 @@ async def get_case(db: AsyncSession, visit_id: str) -> dict | None:
     return {"visit": visit, "patient": patient, "risk": risk, "guide": guide, "esc": esc}
 
 
-async def get_bp_history(db: AsyncSession, patient_id: str, limit: int = 10) -> list:
+async def get_bp_history(db: AsyncSession, clinic_id: str, patient_id: str, limit: int = 10) -> list:
     """Fetch time-series BP readings for a patient's chart."""
     result = await db.execute(
         select(Vital, Visit)
         .join(Visit, Vital.visit_id == Visit.id)
-        .where(Visit.patient_id == patient_id)
+        .where(Visit.patient_id == patient_id, Visit.clinic_id == clinic_id)
         .order_by(desc(Vital.created_at))
         .limit(limit)
     )

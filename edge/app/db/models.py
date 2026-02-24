@@ -30,6 +30,7 @@ class Patient(Base):
     name = Column(Text, nullable=False)
     age = Column(Integer, nullable=False)
     gestational_age_weeks = Column(Integer, nullable=True)
+    clinic_id = Column(String, nullable=True, index=True) # Multitenancy tie to user/clinic
     created_at = Column(DateTime, default=datetime.utcnow)
 
     visits = relationship("Visit", back_populates="patient")
@@ -40,6 +41,7 @@ class Visit(Base):
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=new_uuid)
     patient_id = Column(UUID(as_uuid=False), ForeignKey("patients.id"), nullable=False)
+    clinic_id = Column(String, nullable=True, index=True) # Multitenancy tie
     visit_date = Column(DateTime, default=datetime.utcnow)
     notes = Column(Text, nullable=True)
 

@@ -96,11 +96,11 @@ async def submit_case(
 
     # Persist
     patient = await crud.get_or_create_patient(
-        db, name=payload.name, age=payload.age,
+        db, clinic_id=current_user["sub"], name=payload.name, age=payload.age,
         gestational_age_weeks=payload.gestational_age_weeks,
     )
     visit = await crud.create_visit(
-        db, patient_id=patient.id,
+        db, clinic_id=current_user["sub"], patient_id=patient.id,
         vitals_data=payload.vitals.model_dump(),
         symptoms_list=payload.symptoms,
         notes=payload.notes,
@@ -156,7 +156,7 @@ async def get_case(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    row = await crud.get_case(db, visit_id=visit_id)
+    row = await crud.get_case(db, clinic_id=current_user["sub"], visit_id=visit_id)
     if not row:
         raise HTTPException(status_code=404, detail=f"Case {visit_id} not found.")
     visit, patient, risk, guide, esc = (
@@ -189,7 +189,7 @@ async def list_history(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return await crud.list_history(db, skip=skip, limit=limit)
+    return await crud.list_history(db, clinic_id=current_user["sub"], skip=skip, limit=limit)
 
 
 @router.get("/patient/{patient_id}/bp_history", summary="Get BP trend data for chart")
@@ -198,4 +198,4 @@ async def bp_history(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return await crud.get_bp_history(db, patient_id=patient_id)
+    return await crud.get_bp_history(db, clinic_id=current_user["sub"], patient_id=patient_id)

@@ -1,7 +1,7 @@
-"""Updated Pydantic schemas aligned with spec (UUID keys, vitals/symptoms split)."""
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
+from uuid import UUID
 
 
 # ── Request ──────────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    id: str  # UUID as string
+    id: Union[str, UUID]
     role: str
     created_at: datetime
 
