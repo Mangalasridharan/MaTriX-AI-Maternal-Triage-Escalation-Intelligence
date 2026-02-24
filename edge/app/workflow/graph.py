@@ -95,7 +95,21 @@ def should_escalate(state: MaternalState) -> str:
     if mode == "CLOUD":
         return "escalate"
         
-    return "escalate" if state.get("escalation_triggered") else "end"
+    # Smart Escalation: Escalate if Risk Agent manually triggered it,
+    # OR if the Risk Agent has low confidence (< 0.7) despite a moderate risk score,
+    # mimicking a nurse asking for a second opinion on an ambiguous case.
+    risk = state.get("risk_output", {})
+    confidence = risk.get("confidence", 1.0)
+    risk_score = risk.get("risk_score", 0)
+
+    if state.get("escalation_triggered"):
+        return "escalate"
+    
+    if confidence < 0.7 and risk_score > 30:
+         state["escalation_reason"] = f"Low confidence ({confidence}) in edge assessment for moderate risk case."
+         return "escalate"
+
+    return "end"
 
 
 # ── Build the graph ──────────────────────────────────────────────────────────

@@ -81,9 +81,27 @@ class CloudLLM:
 
         def _invoke():
             client = boto3.client("sagemaker-runtime", region_name=self.aws_region)
+            
+            # PaliGemma on Standard HF Inference DLC requires a specific dict structure
+            if model_type == "vision":
+                # Standard HF Inference Container format for image-to-text
+                payload_vision = {
+                    "inputs": image_data if image_data else "",
+                    "parameters": {
+                        "prompt": prompt,
+                        "max_new_tokens": 500
+                    }
+                }
+                # Note: Some DLC versions prefer {"inputs": {"image": "...", "text": "..."}}
+                # We'll use the most common one for the deployed task "image-text-to-text"
+                body = json.dumps(payload_vision)
+            else:
+                # Standard TGI format for MedGemma text models
+                body = json.dumps(payload)
+
             response = client.invoke_endpoint(
                 EndpointName=endpoint,
-                Body=json.dumps(payload),
+                Body=body,
                 ContentType="application/json",
             )
             return json.loads(response["Body"].read().decode())
