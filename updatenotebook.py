@@ -1,8 +1,8 @@
 import json
 import os
 
-def update_notebook(notebook_path):
-    with open(notebook_path, 'r', encoding='utf-8') as f:
+def update_notebook(input_path, output_path):
+    with open(input_path, 'r', encoding='utf-8') as f:
         nb = json.load(f)
 
     # 1. Update the setup cell (typically %pip install)
@@ -229,12 +229,13 @@ def update_notebook(notebook_path):
             modified = True
 
     if modified:
-        with open(notebook_path, 'w', encoding='utf-8') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(nb, f, indent=1)
-        print(f"Successfully updated {notebook_path}")
+        print(f"Successfully created {output_path}")
     else:
         print("No matching cells found to update.")
 
 if __name__ == "__main__":
-    path = os.path.abspath("notebooks/Kaggle_MaTriX_Agentic_Validation.ipynb")
-    update_notebook(path)
+    in_path = os.path.abspath("notebooks/Kaggle_MaTriX_Agentic_Validation_backup.ipynb")
+    out_path = os.path.abspath("notebooks/MaTriX_Validation_Final.ipynb")
+    update_notebook(in_path, out_path)

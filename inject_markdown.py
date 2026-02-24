@@ -47,5 +47,5 @@ def inject_markdown(notebook_path):
     print(f"Successfully injected comprehensive architecture markdown into {notebook_path}")
 
 if __name__ == "__main__":
-    path = os.path.abspath("notebooks/Kaggle_MaTriX_Agentic_Validation.ipynb")
+    path = os.path.abspath("notebooks/MaTriX_Validation_Final.ipynb")
     inject_markdown(path)
