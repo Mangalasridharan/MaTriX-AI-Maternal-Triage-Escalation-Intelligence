@@ -24,22 +24,24 @@ async def escalation_node(state: MaternalState) -> MaternalState:
     Respects the currently configured topology mode.
     """
     # Import here to avoid circular imports
-    from app.api.topology import is_cloud_allowed, get_topology_mode
+    from app.api.topology import get_topology_mode
+
+    current_mode = get_topology_mode()
 
     # OFFLINE mode: block all cloud calls entirely
-    if not is_cloud_allowed():
+    if current_mode == "OFFLINE":
         state["cloud_connected"] = False
-        state["mode"] = f"offline-forced ({get_topology_mode()})"
+        state["mode"] = "offline-forced"
         state["executive_output"] = {
             "executive_summary": (
-                f"System is in {get_topology_mode()} mode. "
-                "Cloud escalation is disabled by administrator. "
-                "Refer to guideline plan and escalate via standard protocol."
+                "System is in Strict Offline mode. "
+                "Cloud 27B escalation is disabled by administrator. "
+                "Please refer to the edge 4B guideline plan and escalate via standard hospital protocol."
             ),
-            "care_plan": state.get("guideline_output", {}).get("stabilization_plan", ""),
+            "care_plan": state.get("guideline_output", {}).get("stabilization_plan", "Unknown"),
             "referral_urgency": "urgent",
             "referral_priority": "urgent",
-            "justification": f"Topology locked to {get_topology_mode()} — cloud blocked.",
+            "justification": "Topology locked to OFFLINE — cloud routing blocked.",
             "time_to_transfer_hours": 1.0,
         }
         return state
@@ -85,7 +87,14 @@ async def escalation_node(state: MaternalState) -> MaternalState:
 # ── Conditional edge function ────────────────────────────────────────────────
 
 def should_escalate(state: MaternalState) -> str:
-    """Return 'escalate' or 'end' based on router decision."""
+    """Return 'escalate' or 'end' based on router decision AND topology mode."""
+    from app.api.topology import get_topology_mode
+    mode = get_topology_mode()
+    
+    # If topology is CLOUD, we bypass the risk threshold and always escalate to 27B
+    if mode == "CLOUD":
+        return "escalate"
+        
     return "escalate" if state.get("escalation_triggered") else "end"
 
 
