@@ -37,7 +37,7 @@ export function VisionResultCard({ result }: { result: VisionOutput | null | und
               <p className="text-[10px] font-mono uppercase tracking-widest">Visual Inspection Log</p>
             </div>
             
-            <p className={`text-sm leading-relaxed ${isFailed ? 'text-rose-400/80 italic' : 'text-white/70 font-light'}`}>
+            <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${isFailed ? 'text-rose-400/80 italic' : 'text-white/70 font-light'}`}>
               {result.findings}
             </p>
             

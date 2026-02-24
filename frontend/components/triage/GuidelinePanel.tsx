@@ -88,7 +88,7 @@ export function GuidelinePanel({ guide }: { guide: GuidelineResult }) {
                             <span className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-white/60 transition-colors" />
                           </div>
                         )}
-                        <p className={`text-lg font-light leading-relaxed mt-0.5 ${isNumbered ? 'text-white/90' : 'text-white/70'}`}>
+                        <p className={`text-lg font-light leading-relaxed mt-0.5 break-words whitespace-pre-wrap flex-1 ${isNumbered ? 'text-white/90' : 'text-white/70'}`}>
                           {line.replace(/^\d+\.\s*/, "")}
                         </p>
                       </div>

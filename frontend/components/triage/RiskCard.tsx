@@ -47,7 +47,7 @@ export function RiskCard({ risk }: { risk: RiskResult }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="sm:col-span-2 space-y-2">
               <p className="label-mono flex items-center gap-2">Clinical Reasoning</p>
-              <p className="text-white/80 leading-relaxed font-light text-lg">{risk.reasoning}</p>
+              <p className="text-white/80 leading-relaxed font-light text-lg break-words whitespace-pre-wrap">{risk.reasoning}</p>
             </div>
             
             <div className="space-y-2 border-l border-white/10 pl-6 border-t sm:border-t-0 pt-6 sm:pt-0">
@@ -72,8 +72,8 @@ export function RiskCard({ risk }: { risk: RiskResult }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {risk.immediate_actions.map((action, i) => (
                   <div key={i} className="flex items-start gap-3 bg-white/[0.02] p-4 rounded-2xl border border-white/[0.03]">
-                    <span className="text-white/20 font-mono text-xs mt-1">{String(i + 1).padStart(2, '0')}</span>
-                    <span className="text-sm text-white/70 leading-relaxed">{action}</span>
+                    <span className="text-white/20 font-mono text-xs mt-1 flex-shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-sm text-white/70 leading-relaxed break-words whitespace-pre-wrap">{action}</span>
                   </div>
                 ))}
               </div>

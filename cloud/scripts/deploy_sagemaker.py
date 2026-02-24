@@ -73,7 +73,10 @@ def deploy_model(model_key):
     sm_client = boto3.client("sagemaker", region_name=region)
 
     # Image URI (TGI 2.0.1+ supporting Gemma and PaliGemma)
-    image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi2.0.1-gpu-py310-cu121-ubuntu22.04"
+    if model_key == "paligemma-3b":
+        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.3.0-tgi2.2.0-gpu-py310-cu121-ubuntu22.04"
+    else:
+        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi2.0.1-gpu-py310-cu121-ubuntu22.04"
 
     print(f"--- Deploying {model_key} to AWS SageMaker ---")
     print(f"Model ID: {hub_config.get('HF_MODEL_ID')}")

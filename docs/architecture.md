@@ -1,47 +1,48 @@
-# Architecture & Tech Stack
+# MaTriX-AI: Hybrid Edge-Cloud Architecture
 
-MaTriX-AI employs a Hybrid Edge-Cloud Multi-Agent architecture. It is designed to compute base triage reliably local at the edge, while reserving expensive, high-parameter inference for cloud escalation.
+MaTriX-AI uses a decoupled, three-tier architecture ensuring an offline-first resilient mode for clinical clinics, and a high-resource escalation mode for severe maternal anomalies.
 
-## 1. Frontend: The Clinical Interface
+## 🏢 Tier 1: The Clinic Edge (Offline Environment)
 
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS (Custom "Aura & Ink" Spatial Editorial design)
-- **Icons:** Lucide React
-- **Data Fetching:** TanStack Query (React Query) + Axios
-- **Charts:** Recharts
+**Functionality**: Offline-First Triage & RAG-based Guidelines
 
-## 2. Edge Node: The Offline Agent
+- **Hardware Required:** Any consumer laptop with 8GB RAM + (ideally RTX 3050 GPU).
+- **Database:** `PostgreSQL` + `pgvector` storing `all-mpnet-base-v2` embeddings representing parsed WHO & NICE maternal care documents.
+- **Base Model:** **MedGemma 4B** (quantized via Unsloth to a Q4_K_M GGUF format via Ollama).
+- **Risk Agent:** Processes raw notes, Blood Pressure, Heart Rate, Glucose, etc. It assigns a mathematical risk `score`.
+- **Guideline Agent:** Taking the output of the Risk Agent, performs a hybrid semantic-BM25 vector search on `pgvector` to identify the correct clinical playbook (e.g., Pre-Eclampsia loading dose MgSO4 protocol).
+- **Data Structure:** All telemetry and clinical inferences are written synchronously to PostgreSQL with cryptographically bound trace IDs to ensure auditability before cloud transmission.
 
-Runs on a local machine within the clinic.
+## 🌩️ Tier 2: The Cloud Escalation Center
 
-- **Framework:** FastAPI (Python 3.13)
-- **Database:** PostgreSQL with `pgvector` extension
-- **Workflow Engine:** LangGraph (StateGraph)
-- **Local LLM Runner:** Ollama
-- **Local Model:** `medgemma:4b` (optimized at Q4_K_M for consumer GPUs)
-- **Embedding Model:** `all-mpnet-base-v2`
-- **Authentication:** `bcrypt` for password hashing, `PyJWT` for token generation.
+_(Requires Internet Access)_
 
-## 3. Cloud Node: The Executive Agent
+**Functionality**: Heavy-Duty Context Analysis & Vision Processing
 
-Dynamically triggered only when a case breaches severity thresholds.
+- **Routing Logic:** If the Edge Risk Agent determines a patient matches 'HIGH' urgency (e.g., Severe Hypertension, Ruptured Membranes), the Edge FastAPI server sends a Webhook payload to the Cloud FastAPI instance.
+- **Deployment:** AWS SageMaker Inference Endpoints backed by `ml.g5.12xlarge` resources.
+- **Executive Agent:** **MedGemma 27B** parameter model. Analyzes the complete patient history, current vitals, and identified WHO guideline to build an extraction/transfer plan, calculating exact "time-to-criticality".
+- **Vision Specialist:** **PaliGemma 3B**, a multimodal VLM capable of extracting text, parsing ECG waveforms, or finding abnormalities in an uploaded JPG of a Fetal Heart Tracer.
 
-- **Framework:** FastAPI
-- **Inference Hardware:** **AWS SageMaker** (Direct Boto3 integration) or **HuggingFace Inference Endpoints**
-- **Cloud Model:** `google/medgemma-27b-it`
-- **Routing Logic:** Evaluates full edge context to generate referral, transport, and receiving-facility requirements.
+## 🖥️ Tier 3: The Spatial Interface
+
+**Functionality**: Interactive Nursing Dashboard
+
+- **Framework:** Next.js 14, Tailwind CSS, Framer Motion.
+- **UX Pattern:** Premium Dribbble-inspired Dark Mode Interface.
+- **Interactivity:** Drag and Drop CTG Images, Live Markdown Streaming, WebSocket updates.
+- **Visual Logic:** Agentic computation is visualized as physical cards animating into view, representing multiple "doctor personas" evaluating the patient sequentially.
 
 ---
 
-## Data Flow Diagram
+### Sequence Flow (Maternal Triage)
 
-1. User submits vitals/symptoms on Frontend.
-2. Frontend `POST` to Edge API.
-3. Edge executes **Agentic Swarm** (LangGraph):
-   - **Risk Agent:** Initial analysis.
-   - **Guideline Agent:** RAG retrieval from `pgvector`.
-   - **Critique Agent:** Self-correction and safety audit of care plans.
-   - **Router:** Decides if cloud escalation is mandatory.
-4. _If Escalated:_ Edge calls Cloud API (SageMaker/HF) for `MedGemma 27B` synthesis.
-5. Frontend displays real-time execution via the **Swarm Visualizer** before showing final care plans.
+1. **Nurse inputs data** (Vitals + Short text phrase) on the NextJS frontend.
+2. Frontend sends JSON payload to `Edge API (port 8000)`.
+3. Edge API sends context to Ollama (`MedGemma 4B`).
+4. **Risk Agent** calculates `mid` or `high` risk, and outputs structured JSON.
+5. If `high` risk, Edge API triggers a REST POST to `Cloud API (port 9000)`.
+6. Cloud API invokes `SageMaker Endpoint (MedGemma 27B)`.
+7. **Executive Agent** parses deep medical strategy and returns final plan.
+8. `Governance Layer` hashes the payload (SHA-256).
+9. Response travels back to Frontend, popping open the "Escalation Panel."

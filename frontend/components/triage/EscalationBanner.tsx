@@ -70,27 +70,27 @@ export function EscalationBanner({ result }: { result: CaseResult }) {
             {/* Executive Summary */}
             <div>
               <p className="label-mono text-rose-400 mb-2 ml-1">Executive Summary</p>
-              <p className="text-lg md:text-xl font-light text-white/90 leading-relaxed max-w-4xl">"{plan.executive_summary}"</p>
+              <p className="text-lg md:text-xl font-light text-white/90 leading-relaxed max-w-4xl break-words whitespace-pre-wrap">"{plan.executive_summary}"</p>
             </div>
 
             {/* Matrix Data Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-rose-500/10">
               <div className="space-y-2 p-4 rounded-xl bg-black/40 border border-white/5 hover:border-violet-500/30 transition-colors">
                 <p className="label-mono text-violet-400">Care Plan</p>
-                <p className="text-sm font-light text-white/70 leading-relaxed">{plan.care_plan}</p>
+                <p className="text-sm font-light text-white/70 leading-relaxed break-words whitespace-pre-wrap">{plan.care_plan}</p>
               </div>
               <div className="space-y-2 p-4 rounded-xl bg-black/40 border border-white/5 hover:border-sky-500/30 transition-colors">
                 <p className="label-mono text-sky-400">In-Transit Care</p>
-                <p className="text-sm font-light text-white/70 leading-relaxed">{plan.in_transit_care || "Continuous monitoring during transport."}</p>
+                <p className="text-sm font-light text-white/70 leading-relaxed break-words whitespace-pre-wrap">{plan.in_transit_care || "Continuous monitoring during transport."}</p>
               </div>
               <div className="space-y-2 p-4 rounded-xl bg-black/40 border border-white/5 hover:border-amber-500/30 transition-colors">
                 <p className="label-mono text-amber-400">Facility Required</p>
-                <p className="text-sm font-light text-white/70 leading-relaxed">{plan.receiving_facility_requirements || "Tertiary obstetric unit."}</p>
+                <p className="text-sm font-light text-white/70 leading-relaxed break-words whitespace-pre-wrap">{plan.receiving_facility_requirements || "Tertiary obstetric unit."}</p>
               </div>
             </div>
 
             <div className="p-3 rounded-lg border border-white/5 bg-white/[0.01] inline-block">
-              <p className="text-xs font-mono text-white/40"><span className="text-white/60">JUSTIFICATION:</span> {plan.justification}</p>
+              <p className="text-xs font-mono text-white/40 break-words whitespace-pre-wrap"><span className="text-white/60">JUSTIFICATION:</span> {plan.justification}</p>
             </div>
           </div>
         )}
