@@ -1,0 +1,48 @@
+services:
+  # Cloud Gateway Node
+  - type: web
+    name: matrix-cloud
+    runtime: docker
+    dockerContext: cloud # Root directory for Docker build
+    dockerfilePath: Dockerfile
+    plan: free # Can be upgraded to starter
+    region: ohio
+    healthCheckPath: /health
+    envVars:
+      - key: CLOUD_API_KEY
+        generateValue: true # Render will automatically generate a secure 256-bit key
+      - key: AWS_ACCESS_KEY_ID
+        sync: false # Add this manually in Render Dashboard if using SageMaker
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false # Add this manually in Render Dashboard if using SageMaker
+      - key: AWS_REGION
+        value: us-east-1
+      - key: HF_API_TOKEN
+        sync: false # Add your HuggingFace Token starting with hf_... here
+
+  # Edge Triage Node
+  - type: web
+    name: matrix-edge
+    runtime: docker
+    dockerContext: edge # Root directory for Docker build
+    dockerfilePath: Dockerfile
+    plan: free
+    region: ohio
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Paste your Supabase Connection Pooler string here (e.g. postgresql://postgres.xxxxx:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres)
+      - key: CLOUD_API_URL
+        fromService:
+          type: web
+          name: matrix-cloud
+          property: url # Automatically links the cloud service's live URL
+      - key: CLOUD_API_KEY
+        fromService:
+          type: web
+          name: matrix-cloud
+          envVarKey: CLOUD_API_KEY # Automatically securely copies the API key from the cloud node to the edge node
+      - key: JWT_SECRET_KEY
+        generateValue: true # Auto-generates a secure JWT signing key
+      - key: DEMO_CLINIC_PASSWORD
+        value: "demo1234" # Default demo password for access

@@ -1,35 +1,39 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  Activity, LayoutDashboard, ClockHistory, Settings,
+  Activity, LayoutDashboard, History, Settings,
   HeartPulse, LogOut, ChevronRight, type LucideIcon
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 interface NavItem { icon: LucideIcon; label: string; href: string; badge?: string; }
 
 const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: "Triage",   href: "/" },
   { icon: Activity,        label: "Monitor",  href: "/monitor" },
-  { icon: ClockHistory,    label: "History",  href: "/history" },
+  { icon: History,         label: "History",  href: "/history" },
   { icon: Settings,        label: "Settings", href: "/settings" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router   = useRouter();
-  const logout   = () => { localStorage.removeItem("matrix_token"); router.push("/login"); };
+  const { user, logout } = useAuth();
+
+  const clinicDisplay = user?.clinic_name || "Clinic Triage";
+  const userRole = user ? `@${user.username}` : "MaTriX-AI";
 
   return (
     <aside className="sidebar group" aria-label="Sidebar navigation">
       {/* Brand logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/[0.04] mb-2">
-        <div className="w-8 h-8 rounded-lg bg-violet-600/30 border border-violet-500/40 flex items-center justify-center flex-shrink-0">
-          <HeartPulse size={15} className="text-violet-400" />
+        <div className="w-8 h-8 rounded-lg bg-violet-600/30 border border-violet-500/40 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <div className="absolute inset-0 bg-violet-500/20 blur animate-pulse" />
+          <HeartPulse size={15} className="text-violet-400 relative z-10" />
         </div>
         <div className="sidebar-label flex flex-col min-w-0">
-          <span className="text-sm font-black text-gradient leading-none">MaTriX-AI</span>
-          <span className="text-[10px] text-slate-600 mt-0.5 truncate">Clinic Triage</span>
+          <span className="text-sm font-black text-gradient leading-none truncate">{clinicDisplay}</span>
+          <span className="text-[10px] text-slate-500 mt-0.5 truncate uppercase tracking-widest">{userRole}</span>
         </div>
       </div>
 

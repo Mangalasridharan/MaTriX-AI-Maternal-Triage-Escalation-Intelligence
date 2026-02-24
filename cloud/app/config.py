@@ -6,7 +6,7 @@ from functools import lru_cache
 class CloudSettings(BaseSettings):
     """Cloud service settings."""
     # Security
-    cloud_api_key: str = "changeme"
+    cloud_api_key: str = ""  # Must be set via CLOUD_API_KEY env var
 
     # HuggingFace Inference Endpoint (AWS-hosted 27B) - Optional
     hf_inference_endpoint: str = ""       # e.g. https://xxx.us-east-1.aws.endpoints.huggingface.cloud

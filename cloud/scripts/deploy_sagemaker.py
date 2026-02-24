@@ -15,7 +15,6 @@ MODEL_CONFIGS = {
         "hub": {
             "HF_MODEL_ID": "google/medgemma-27b-it",
             "SM_NUM_GPUS": "4",
-            "HF_MODEL_QUANTIZE": "bitsandbytes",
             "MAX_INPUT_LENGTH": "2048",
             "MAX_TOTAL_TOKENS": "4096",
             "HF_TRUST_REMOTE_CODE": "true",
@@ -25,9 +24,8 @@ MODEL_CONFIGS = {
     },
     "medgemma-4b": {
         "hub": {
-            "HF_MODEL_ID": "google/medgemma-4b-it",
+            "HF_MODEL_ID": "google/medgemma-1.5-4b-it",
             "SM_NUM_GPUS": "1",
-            "HF_MODEL_QUANTIZE": "bitsandbytes",
             "MAX_INPUT_LENGTH": "2048",
             "MAX_TOTAL_TOKENS": "4096",
             "HF_TRUST_REMOTE_CODE": "true",
@@ -66,7 +64,7 @@ def deploy_model(model_key):
     region = os.getenv("AWS_REGION", "us-east-1")
 
     if hf_token:
-        hub_config["HUGGING_FACE_HUB_TOKEN"] = hf_token
+        hub_config["HF_TOKEN"] = hf_token
 
     # Boto3 Client
     sm_client = boto3.client("sagemaker", region_name=region)
@@ -81,10 +79,10 @@ def deploy_model(model_key):
         # Tag sourced from: https://aws.github.io/deep-learning-containers/reference/available_images/
         image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-inference:2.6.0-transformers4.49.0-gpu-py312-cu124-ubuntu22.04"
     else:
-        # TGI container for text-generation models (MedGemma 4B / 27B)
-        # TGI 3.3.4+ on PyTorch 2.7 / CUDA 12.4 supports Gemma 3 (MedGemma) architecture
-        # Tag sourced from: ECR repo 763104351884/huggingface-pytorch-tgi-inference
-        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.7.0-tgi3.3.4-gpu-py311-cu124-ubuntu22.04"
+        # TGI 3.3.4-v2.0 on PyTorch 2.7 — confirmed to exist in ECR (verified via describe-images)
+        # NOTE: bitsandbytes removed (incompatible with cuda graphs in TGI 3.x)
+        # NOTE: HF_TOKEN is now correctly injected for gated model access
+        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.7.0-tgi3.3.4-gpu-py311-cu124-ubuntu22.04-v2.0"
 
     print(f"--- Deploying {model_key} to AWS SageMaker ---")
     print(f"Model ID: {hub_config.get('HF_MODEL_ID')}")

@@ -1,24 +1,23 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Cpu, Cloud, Settings, Key, Save, Info, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SettingsPage() {
-  const router = useRouter();
-  const [clinicName, setClinicName]   = useState("My Clinic");
-  const [edgeUrl, setEdgeUrl]         = useState("http://localhost:8000");
+  const { logout, user } = useAuth();
+  const [clinicalMode, setClinicalMode] = useState("HYBRID");
+  const [clinicName, setClinicName]   = useState(user?.clinic_name || "My Clinic");
+  const [edgeUrl, setEdgeUrl]         = useState(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
   const [cloudUrl, setCloudUrl]       = useState("http://localhost:9000");
   const [saved, setSaved]             = useState(false);
 
-  const handleSignOut = () => {
-    localStorage.removeItem("matrix_token");
-    router.push("/login");
-  };
+  const handleSignOut = () => logout();
 
   const save = () => {
     if (typeof window !== "undefined") {
       localStorage.setItem("matrix_clinic", clinicName);
       localStorage.setItem("matrix_edge_url", edgeUrl);
+      localStorage.setItem("matrix_topology", clinicalMode);
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -97,6 +96,62 @@ export default function SettingsPage() {
             </div>
           </div>
         ))}
+
+        {/* Dynamic Topology Configurator */}
+        <div className="spatial-panel p-8 md:p-10 hover:border-emerald-500/30 transition-all duration-500 group">
+          <div className="flex items-start gap-6 mb-8 border-b border-white/5 pb-8">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors duration-500">
+              <Settings size={24} />
+            </div>
+            <div className="pt-1">
+              <h3 className="text-2xl font-light text-white mb-2">Network Topology</h3>
+              <p className="text-sm font-light text-white/40">Configure Model Routing Architecture</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                id: "OFFLINE",
+                title: "Strict Offline",
+                desc: "100% Edge Processing. No 27B Exec Agent. Failsafe Mode.",
+                color: "rose"
+              },
+              {
+                id: "HYBRID",
+                title: "Hybrid (Default)",
+                desc: "Edge 4B Triage + Cloud 27B Escalation. Cost Optimized.",
+                color: "amber"
+              },
+              {
+                id: "CLOUD",
+                title: "Full Cloud",
+                desc: "All agents run on SageMaker G5. Requires persistent 5G.",
+                color: "cyan"
+              }
+            ].map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => setClinicalMode(mode.id)}
+                className={`flex flex-col gap-2 p-5 rounded-xl border text-left transition-all duration-300
+                  ${clinicalMode === mode.id 
+                    ? `bg-${mode.color}-500/20 border-${mode.color}-500/50` 
+                    : "bg-black/40 border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
+                  }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className={`font-mono tracking-widest text-sm uppercase ${clinicalMode === mode.id ? `text-${mode.color}-400` : "text-white"}`}>
+                    {mode.title}
+                  </span>
+                  {clinicalMode === mode.id && <div className={`w-2 h-2 rounded-full animate-pulse bg-${mode.color}-400 shadow-lg`} />}
+                </div>
+                <span className="text-xs font-light text-white/50 leading-relaxed max-w-[90%]">
+                  {mode.desc}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Info box */}

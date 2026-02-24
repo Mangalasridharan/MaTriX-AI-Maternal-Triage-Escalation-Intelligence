@@ -89,7 +89,14 @@ class CloudLLM:
             return json.loads(response["Body"].read().decode())
 
         data = await asyncio.to_thread(_invoke)
-        raw = data[0]["generated_text"] if isinstance(data, list) else data.get("generated_text", "{}")
+        
+        if isinstance(data, list) and len(data) > 0:
+            raw = data[0].get("generated_text", "{}")
+        elif isinstance(data, dict):
+            raw = data.get("generated_text", "{}")
+        else:
+            raw = "{}"
+
         return _extract_json(raw)
 
     async def _call_hf(self, prompt: str, system: str) -> dict:
@@ -107,7 +114,12 @@ class CloudLLM:
             )
             resp.raise_for_status()
             data = resp.json()
-            raw = data[0]["generated_text"] if isinstance(data, list) else data.get("generated_text", "{}")
+            if isinstance(data, list) and len(data) > 0:
+                raw = data[0].get("generated_text", "{}")
+            elif isinstance(data, dict):
+                raw = data.get("generated_text", "{}")
+            else:
+                raw = "{}"
             return _extract_json(raw)
 
     async def _call_ollama(self, prompt: str, system: str, image_data: str | None = None) -> dict:
@@ -130,9 +142,24 @@ class CloudLLM:
 
 def _extract_json(text: str) -> dict:
     import re
-    try: return json.loads(text.strip())
-    except Exception: pass
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    return json.loads(match.group(0)) if match else {}
+    # 1. Try direct parse
+    try:
+        return json.loads(text.strip())
+    except Exception:
+        pass
+    
+    # 2. Try cleaning markdown blocks
+    text = re.sub(r"```json\s*", "", text)
+    text = re.sub(r"```\s*", "", text)
+    
+    # 3. Try finding first { and last }
+    match = re.search(r"(\{.*\})", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except Exception:
+            pass
+            
+    return {}
 
 cloud_llm = CloudLLM()

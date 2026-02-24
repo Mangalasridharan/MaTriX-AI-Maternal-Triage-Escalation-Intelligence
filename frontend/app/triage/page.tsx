@@ -9,8 +9,9 @@ import { GuidelinePanel } from "@/components/triage/GuidelinePanel";
 import { EscalationBanner } from "@/components/triage/EscalationBanner";
 import { AgenticSwarmVisualizer } from "@/components/triage/AgenticSwarmVisualizer";
 import { VisionResultCard } from "@/components/triage/VisionResultCard";
+import { Suspense } from "react";
 
-export default function TriagePage() {
+function TriageContent() {
   const [result, setResult]     = useState<CaseResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const params = useSearchParams();
@@ -71,5 +72,17 @@ export default function TriagePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TriagePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <TriageContent />
+    </Suspense>
   );
 }

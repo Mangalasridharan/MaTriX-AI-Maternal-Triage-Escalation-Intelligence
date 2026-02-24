@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = "postgresql+asyncpg://matrix:matrix@localhost:5432/matrixdb"
+    database_url: str = "" # Must be set via DATABASE_URL env var
 
     # Local LLM (Ollama — MedGemma 4B)
     ollama_base_url: str = "http://localhost:11434"
@@ -21,10 +21,10 @@ class Settings(BaseSettings):
 
     # Cloud escalation service
     cloud_api_url: str = "http://localhost:9000"
-    cloud_api_key: str = "changeme"
+    cloud_api_key: str = ""  # Must be set via CLOUD_API_KEY env var
 
     # JWT Auth (frontend ↔ edge)
-    jwt_secret_key: str = "CHANGE_ME_USE_A_REAL_SECRET_IN_PRODUCTION"
+    jwt_secret_key: str = ""  # Must be set via JWT_SECRET_KEY env var
     jwt_algorithm: str = "HS256"
 
     # Clinic shared password (nurse login)

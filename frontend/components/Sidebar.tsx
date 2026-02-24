@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  Activity, LayoutDashboard, ClockHistory, Settings,
+  Activity, LayoutDashboard, History, Settings,
   HeartPulse, LogOut, ChevronRight, type LucideIcon
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -12,7 +12,7 @@ interface NavItem { icon: LucideIcon; label: string; href: string; badge?: strin
 const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: "Triage",   href: "/" },
   { icon: Activity,        label: "Monitor",  href: "/monitor" },
-  { icon: ClockHistory,    label: "History",  href: "/history" },
+  { icon: History,          label: "History",  href: "/history" },
   { icon: Settings,        label: "Settings", href: "/settings" },
 ];
 
