@@ -19,7 +19,15 @@ In low-resource clinics, internet connectivity is scarce and patient volume is o
 
 ## 🏗️ System Architecture
 
-MaTriX-AI uses three distinct specialized agents passing context dynamically.
+MaTriX-AI uses three distinct specialized agents passing context dynamically, managed by a hospital-configurable **Network Topology**.
+
+### 🛠️ Dynamic Network Topology
+
+Administrators can use the Settings UI to instantly re-route AI inference:
+
+- **Strict Offline**: 100% air-gapped local processing. Disconnects Cloud 27B and Vision completely. Fast, zero-cost triage.
+- **Hybrid (Default)**: Edge 4B local triage for 90% of cases. Only escalates to Cloud 27B if risk is critically high.
+- **Full Cloud**: Maximum accuracy mode. All inference routed through powerful AWS/Render cloud nodes.
 
 ### 1. The Edge Tier (Local/Offline)
 
@@ -35,13 +43,14 @@ MaTriX-AI uses three distinct specialized agents passing context dynamically.
 
 ## 🛠️ Technology Stack
 
-| Domain               | Technology                                  | Description                                                                                                                                    |
-| :------------------- | :------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend UI/UX**   | **Next.js 14, React 18, Tailwind CSS**      | Spatial, premium Dribbble-inspired dark-mode UI. Employs Framer Motion for deep interactive micro-animations and a multi-step clinical wizard. |
-| **Edge Backend**     | **FastAPI, Python 3.13**                    | High-concurrency async ASGI server managing the swarm state.                                                                                   |
-| **Local LLM Engine** | **Ollama, unsloth/medgemma-1.5-4b-it-GGUF** | Highly-quantized (4-bit API) offline inference engine capable of running on minimal RAM.                                                       |
-| **Vector Database**  | **PostgreSQL + `pgvector`**                 | Stores 1000+ WHO maternal guideline embeddings via `all-mpnet-base-v2`.                                                                        |
-| **Cloud Backend**    | **FastAPI, AWS SageMaker**                  | The escalation server managing the Boto3 connectivity to Heavy-Duty HuggingFace inference clusters.                                            |
+| Domain                        | Technology                                  | Description                                                                                                                                        |
+| :---------------------------- | :------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend UI/UX**            | **Next.js 14, React 18, Tailwind CSS**      | Spatial, premium Dribbble-inspired dark-mode UI. Employs Framer Motion for deep interactive micro-animations and a multi-step clinical wizard.     |
+| **Edge Backend**              | **FastAPI, Python 3.13**                    | High-concurrency async ASGI server managing the swarm state.                                                                                       |
+| **Local LLM Engine**          | **Ollama, unsloth/medgemma-1.5-4b-it-GGUF** | Highly-quantized (4-bit API) offline inference engine capable of running on minimal RAM.                                                           |
+| **Vector Database**           | **PostgreSQL + `pgvector`**                 | Stores 1000+ WHO maternal guideline embeddings via `all-mpnet-base-v2`.                                                                            |
+| **Cloud Backend**             | **FastAPI, AWS SageMaker**                  | The escalation server managing the Boto3 connectivity to Heavy-Duty HuggingFace inference clusters.                                                |
+| **CI/CD Continuous Learning** | **GitHub Actions + Kaggle + Copilot**       | Automated weekly LoRA fine-tuning on free Kaggle GPUs using clinical outcomes, plus Copilot-driven swarm architecture prompt optimization via PRs. |
 
 ---
 
@@ -115,6 +124,17 @@ python scripts/deploy_sagemaker.py --model paligemma-3b
 
 ---
 
+## 🤖 Automated Self-Improvement Swarm
+
+MaTriX-AI is designed to learn directly from nurse corrections over time, completely autonomously via GitHub Actions.
+
+1. **Opt-In Fine-Tuning**: If enabled in the clinic UI, cases where the AI disagreed with the clinical outcome are periodically collected.
+2. **Kaggle GPU Training**: The repository auto-zips the dataset and deploys a PEFT LoRA fine-tuning job remotely to a **free Kaggle T4x2 GPU** environment.
+3. **Copilot Swarm Audit**: OpenAI/Copilot analyzes the "Drift Score" and suggests prompt architectural improvements to the LangGraph agents.
+4. **Pull Requests**: The system automatically commits the new LoRA adapters to HuggingFace and opens a PR modifying the Python agents.
+
+---
+
 ## 🧪 Kaggle Validation Suite
 
 We include a fully self-contained standalone Jupyter Notebook located in `notebooks/Kaggle_MaTriX_Agentic_Validation.ipynb`.
@@ -122,6 +142,7 @@ We include a fully self-contained standalone Jupyter Notebook located in `notebo
 - Includes a full End-to-End recreation of the 3-Agent Swarm logic.
 - Extracts dynamic JSON responses reliably from non-deterministic LLM tokens.
 - Computes Confusion Matrix, Precision, Recall, and F1 Scores across various datasets.
+- Optimized hybrid memory split: Automatically isolates **4B + 3B models exclusively to GPU 1**, while cleanly mapping the massive **27B Executive entirely to CPU memory (`n_gpu_layers=0`)**, preventing VRAM overflow crashes.
 - Generates a fully interactive **Gradio Demo** directly in the notebook payload.
 - **Performance:** A validation run over 200 triage cases typically takes ~10-20 minutes depending on how heavily the 27B cloud escalation thresholds trigger.
 
