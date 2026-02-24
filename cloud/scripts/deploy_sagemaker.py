@@ -81,8 +81,10 @@ def deploy_model(model_key):
         # Tag sourced from: https://aws.github.io/deep-learning-containers/reference/available_images/
         image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-inference:2.6.0-transformers4.49.0-gpu-py312-cu124-ubuntu22.04"
     else:
-        # TGI container for text-generation models (MedGemma)
-        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi2.0.1-gpu-py310-cu121-ubuntu22.04"
+        # TGI container for text-generation models (MedGemma 4B / 27B)
+        # TGI 3.3.4+ on PyTorch 2.7 / CUDA 12.4 supports Gemma 3 (MedGemma) architecture
+        # Tag sourced from: ECR repo 763104351884/huggingface-pytorch-tgi-inference
+        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.7.0-tgi3.3.4-gpu-py311-cu124-ubuntu22.04"
 
     print(f"--- Deploying {model_key} to AWS SageMaker ---")
     print(f"Model ID: {hub_config.get('HF_MODEL_ID')}")
@@ -125,11 +127,28 @@ def deploy_model(model_key):
             )
         except sm_client.exceptions.ClientError as e:
             if "already exists" in str(e):
-                print(f"Endpoint already exists. Updating...")
-                sm_client.update_endpoint(
-                    EndpointName=endpoint_name,
-                    EndpointConfigName=config_name
-                )
+                # Check if endpoint is in a terminal Failed state - must delete first
+                try:
+                    ep = sm_client.describe_endpoint(EndpointName=endpoint_name)
+                    if ep["EndpointStatus"] == "Failed":
+                        print(f"Endpoint is in Failed state. Deleting for clean redeploy...")
+                        sm_client.delete_endpoint(EndpointName=endpoint_name)
+                        time.sleep(20)  # wait for deletion to propagate
+                        sm_client.create_endpoint(
+                            EndpointName=endpoint_name,
+                            EndpointConfigName=config_name
+                        )
+                    else:
+                        print(f"Endpoint exists (status: {ep['EndpointStatus']}). Updating...")
+                        sm_client.update_endpoint(
+                            EndpointName=endpoint_name,
+                            EndpointConfigName=config_name
+                        )
+                except sm_client.exceptions.ClientError:
+                    sm_client.create_endpoint(
+                        EndpointName=endpoint_name,
+                        EndpointConfigName=config_name
+                    )
             else:
                 raise e
 
