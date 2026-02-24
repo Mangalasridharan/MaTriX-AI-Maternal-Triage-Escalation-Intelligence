@@ -37,15 +37,14 @@ MODEL_CONFIGS = {
     },
     "paligemma-3b": {
         "hub": {
+            # Standard HF Inference container env vars (NOT TGI)
             "HF_MODEL_ID": "google/paligemma-3b-pt-224",
-            "SM_NUM_GPUS": "1",
-            "HF_MODEL_QUANTIZE": "bitsandbytes",
-            "MAX_INPUT_LENGTH": "1024",
-            "MAX_TOTAL_TOKENS": "2048",
+            "HF_TASK": "image-text-to-text",
             "HF_TRUST_REMOTE_CODE": "true",
         },
         "instance_type": "ml.g5.2xlarge",
-        "endpoint_name": "matrix-paligemma-3b-prod"
+        "endpoint_name": "matrix-paligemma-3b-prod",
+        "use_standard_inference": True  # Use HF Inference DLC (not TGI)
     }
 }
 
@@ -72,10 +71,17 @@ def deploy_model(model_key):
     # Boto3 Client
     sm_client = boto3.client("sagemaker", region_name=region)
 
-    # Image URI (TGI 2.0.1+ supporting Gemma and PaliGemma)
-    if model_key == "paligemma-3b":
-        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.3.0-tgi2.2.0-gpu-py310-cu121-ubuntu22.04"
+    # Image URI selection:
+    # - PaliGemma is a VLM and CANNOT use TGI (text-generation-server). Use the
+    #   standard HF PyTorch Inference container with transformers pipeline instead.
+    # - MedGemma models use TGI for high-performance text generation.
+    use_standard_inference = config.get("use_standard_inference", False)
+    if use_standard_inference:
+        # Standard HuggingFace Inference DLC (transformers 4.49 supports PaliGemma natively)
+        # Tag sourced from: https://aws.github.io/deep-learning-containers/reference/available_images/
+        image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-inference:2.6.0-transformers4.49.0-gpu-py312-cu124-ubuntu22.04"
     else:
+        # TGI container for text-generation models (MedGemma)
         image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-tgi-inference:2.1.1-tgi2.0.1-gpu-py310-cu121-ubuntu22.04"
 
     print(f"--- Deploying {model_key} to AWS SageMaker ---")
