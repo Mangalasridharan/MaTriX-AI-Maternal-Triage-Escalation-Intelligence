@@ -77,6 +77,23 @@ export interface TokenResponse {
   token_type: string;
 }
 
+export interface TopologyConfig {
+  mode: "OFFLINE" | "HYBRID" | "CLOUD";
+  fallback_enabled: boolean;
+  vision_enabled: boolean;
+  executive_agent_enabled: boolean;
+}
+
+export interface TopologyState extends TopologyConfig {
+  updated_at: number | null;
+  updated_by: string | null;
+  model_status: {
+    edge_4b: { online: boolean; latency_ms?: number; model?: string; host?: string; error?: string };
+    cloud_27b: { online: boolean; latency_ms?: number; model?: string; host?: string; error?: string };
+    vision_3b: { online: boolean; latency_ms?: number; model?: string; host?: string; error?: string };
+  };
+}
+
 /* ─── Axios Instance ─────────────────────────────────────────────── */
 const BASE = (typeof window !== "undefined" && localStorage.getItem("matrix_edge_url"))
   || process.env.NEXT_PUBLIC_API_URL
@@ -145,6 +162,17 @@ export const apiClient = {
   /** Vision */
   analyzeVision: async (imageData: string, prompt?: string) => {
     const { data } = await http.post("/api/triage/vision", { image_data: imageData, prompt });
+    return data;
+  },
+
+  /** Topology Config */
+  getTopology: async (): Promise<any> => {
+    const { data } = await http.get("/api/config/topology");
+    return data;
+  },
+
+  setTopology: async (config: TopologyConfig): Promise<any> => {
+    const { data } = await http.post("/api/config/topology", config);
     return data;
   },
 };

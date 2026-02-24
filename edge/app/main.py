@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.api.routes import router
+from app.api.topology import router as topology_router
 from app.db.database import create_all_tables
 
 
@@ -40,6 +41,7 @@ app.add_middleware(
 
 # API routes
 app.include_router(router)
+app.include_router(topology_router)
 
 
 @app.get("/health", tags=["Health"])

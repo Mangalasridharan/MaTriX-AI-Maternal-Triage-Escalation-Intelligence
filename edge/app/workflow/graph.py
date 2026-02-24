@@ -21,7 +21,29 @@ async def escalation_node(state: MaternalState) -> MaternalState:
     """
     Sends the full case summary to the cloud ExecutiveAgent.
     Called only when router decides to escalate.
+    Respects the currently configured topology mode.
     """
+    # Import here to avoid circular imports
+    from app.api.topology import is_cloud_allowed, get_topology_mode
+
+    # OFFLINE mode: block all cloud calls entirely
+    if not is_cloud_allowed():
+        state["cloud_connected"] = False
+        state["mode"] = f"offline-forced ({get_topology_mode()})"
+        state["executive_output"] = {
+            "executive_summary": (
+                f"System is in {get_topology_mode()} mode. "
+                "Cloud escalation is disabled by administrator. "
+                "Refer to guideline plan and escalate via standard protocol."
+            ),
+            "care_plan": state.get("guideline_output", {}).get("stabilization_plan", ""),
+            "referral_urgency": "urgent",
+            "referral_priority": "urgent",
+            "justification": f"Topology locked to {get_topology_mode()} — cloud blocked.",
+            "time_to_transfer_hours": 1.0,
+        }
+        return state
+
     payload = {
         "patient_data": state["patient_data"],
         "vision_output": state.get("vision_output"),
