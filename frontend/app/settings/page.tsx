@@ -132,6 +132,7 @@ export default function SettingsPage() {
   const [fallbackEnabled, setFallbackEnabled] = useState(true);
   const [visionEnabled, setVisionEnabled] = useState(true);
   const [execEnabled, setExecEnabled] = useState(true);
+  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -148,6 +149,7 @@ export default function SettingsPage() {
       setFallbackEnabled(data.fallback_enabled);
       setVisionEnabled(data.vision_enabled);
       setExecEnabled(data.executive_agent_enabled);
+      setDataCollectionEnabled(data.data_collection_enabled || false);
       setError(null);
     } catch (e) {
       setError("Cannot reach Edge service. Check your Edge URL in settings.");
@@ -168,6 +170,7 @@ export default function SettingsPage() {
         fallback_enabled: fallbackEnabled,
         vision_enabled: visionEnabled,
         executive_agent_enabled: execEnabled,
+        data_collection_enabled: dataCollectionEnabled,
       });
       setTopology(result);
       if (typeof window !== "undefined") {
@@ -307,6 +310,7 @@ export default function SettingsPage() {
                   { label: "Rule-based Fallback", val: fallbackEnabled, set: setFallbackEnabled, always: false },
                   { label: "Vision Agent (PaliGemma)", val: visionEnabled, set: setVisionEnabled, always: selectedMode === "OFFLINE" },
                   { label: "Executive Agent (27B)", val: execEnabled, set: setExecEnabled, always: selectedMode === "OFFLINE" },
+                  { label: "Share Data for AI Fine-Tuning", val: dataCollectionEnabled, set: setDataCollectionEnabled, always: false },
                 ].map(({ label, val, set, always }) => (
                   <div key={label} className="flex items-center justify-between">
                     <span className={`text-xs font-light ${always ? "text-white/20" : "text-white/50"}`}>{label}</span>

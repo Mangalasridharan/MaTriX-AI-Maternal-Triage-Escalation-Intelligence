@@ -21,6 +21,7 @@ _topology_state: dict = {
     "fallback_enabled": True,
     "vision_enabled": True,
     "executive_agent_enabled": True,
+    "data_collection_enabled": False,
     "updated_at": None,
     "updated_by": None,
 }
@@ -31,13 +32,14 @@ class TopologyConfig(BaseModel):
     fallback_enabled: bool = True
     vision_enabled: bool = True
     executive_agent_enabled: bool = True
-
+    data_collection_enabled: bool = False
 
 class TopologyResponse(BaseModel):
     mode: str
     fallback_enabled: bool
     vision_enabled: bool
     executive_agent_enabled: bool
+    data_collection_enabled: bool
     updated_at: Optional[float]
     updated_by: Optional[str]
     model_status: dict
@@ -84,9 +86,25 @@ async def _get_all_service_status() -> dict:
 
 # ── GET /api/config/topology ─────────────────────────────────────────────────
 
+from app.db.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.db.models import SystemConfig
+
 @router.get("/topology", summary="Get current topology mode and live service health")
-async def get_topology(current_user: dict = Depends(get_current_user)) -> dict:
+async def get_topology(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> dict:
     model_status = await _get_all_service_status()
+    
+    # Load data_collection state from DB if available
+    stmt = select(SystemConfig).where(SystemConfig.key == "data_collection_enabled")
+    res = await db.execute(stmt)
+    config_row = res.scalar()
+    if config_row:
+        _topology_state["data_collection_enabled"] = config_row.value.get("enabled", False)
+        
     return {**_topology_state, "model_status": model_status}
 
 
@@ -96,6 +114,7 @@ async def get_topology(current_user: dict = Depends(get_current_user)) -> dict:
 async def set_topology(
     config: TopologyConfig,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> dict:
     """
     Dynamically switches the model routing architecture.
@@ -107,8 +126,21 @@ async def set_topology(
     _topology_state["fallback_enabled"] = config.fallback_enabled
     _topology_state["vision_enabled"] = config.vision_enabled
     _topology_state["executive_agent_enabled"] = config.executive_agent_enabled
+    _topology_state["data_collection_enabled"] = config.data_collection_enabled
     _topology_state["updated_at"] = time.time()
     _topology_state["updated_by"] = current_user.get("sub", "unknown")
+
+    # Persist data_collection setting to database for GitHub Actions
+    from sqlalchemy.dialects.postgresql import insert
+    stmt = insert(SystemConfig).values(
+        key="data_collection_enabled", 
+        value={"enabled": config.data_collection_enabled}
+    ).on_conflict_do_update(
+        index_elements=['key'],
+        set_=dict(value={"enabled": config.data_collection_enabled})
+    )
+    await db.execute(stmt)
+    await db.commit()
 
     model_status = await _get_all_service_status()
     return {**_topology_state, "model_status": model_status, "message": f"Topology switched to {config.mode}"}

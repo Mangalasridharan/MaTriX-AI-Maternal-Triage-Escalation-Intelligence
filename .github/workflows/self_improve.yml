@@ -1,220 +1,220 @@
 name: 🤖 Swarm Self-Improvement (Weekly)
 
 on:
-    schedule:
-        - cron: "0 2 * * 0" # Every Sunday 2AM UTC
-    workflow_dispatch: # Allow manual trigger
-        inputs:
-            force_finetune:
-                description: "Force LoRA fine-tune even if threshold not met"
-                required: false
-                default: "false"
+  schedule:
+    - cron: "0 2 * * 0" # Every Sunday 2AM UTC
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      force_finetune:
+        description: "Force LoRA fine-tune even if threshold not met"
+        required: false
+        default: "false"
 
 permissions:
-    contents: write
-    pull-requests: write
+  contents: write
+  pull-requests: write
 
 env:
-    HF_TOKEN: ${{ secrets.HF_TOKEN }}
-    KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-    KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+  KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
 
 jobs:
-    # ─────────────────────────────────────────────────────────────────────────
-    # Job 1: Analyze System Performance & Collect Fine-Tune Data
-    # ─────────────────────────────────────────────────────────────────────────
-    analyze-and-collect:
-        name: 📊 Collect Training Data & Analyze Drift
-        runs-on: ubuntu-latest
-        outputs:
-            needs_finetune: ${{ steps.analysis.outputs.needs_finetune }}
-            sample_count: ${{ steps.analysis.outputs.sample_count }}
-            drift_score: ${{ steps.analysis.outputs.drift_score }}
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: Analyze System Performance & Collect Fine-Tune Data
+  # ─────────────────────────────────────────────────────────────────────────
+  analyze-and-collect:
+    name: 📊 Collect Training Data & Analyze Drift
+    runs-on: ubuntu-latest
+    outputs:
+      needs_finetune: ${{ steps.analysis.outputs.needs_finetune }}
+      sample_count: ${{ steps.analysis.outputs.sample_count }}
+      drift_score: ${{ steps.analysis.outputs.drift_score }}
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.12"
-                  cache: "pip"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
-            - name: Install dependencies
-              run: pip install -q pandas scikit-learn huggingface_hub datasets python-dotenv
+      - name: Install dependencies
+        run: pip install -q pandas scikit-learn huggingface_hub datasets python-dotenv
 
-            - name: Collect & Analyze Training Data
-              id: analysis
-              env:
-                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-              run: |
-                  python scripts/collect_finetune_data.py \
-                    --min_samples 50 \
-                    --output_path finetune_data/new_samples.jsonl \
-                    --force ${{ github.event.inputs.force_finetune || 'false' }}
+      - name: Collect & Analyze Training Data
+        id: analysis
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python scripts/collect_finetune_data.py \
+            --min_samples 50 \
+            --output_path finetune_data/new_samples.jsonl \
+            --force ${{ github.event.inputs.force_finetune || 'false' }}
 
-            - name: Upload training data artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: finetune-data
-                  path: finetune_data/
-                  retention-days: 14
+      - name: Upload training data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finetune-data
+          path: finetune_data/
+          retention-days: 14
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Job 2: Push LoRA Fine-Tune to Kaggle (if needed)
-    # ─────────────────────────────────────────────────────────────────────────
-    lora-finetune:
-        name: 🧠 LoRA Fine-Tune on Kaggle GPU
-        needs: analyze-and-collect
-        if: needs.analyze-and-collect.outputs.needs_finetune == 'true'
-        runs-on: ubuntu-latest
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: Push LoRA Fine-Tune to Kaggle (if needed)
+  # ─────────────────────────────────────────────────────────────────────────
+  lora-finetune:
+    name: 🧠 LoRA Fine-Tune on Kaggle GPU
+    needs: analyze-and-collect
+    if: needs.analyze-and-collect.outputs.needs_finetune == 'true'
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Download training data
-              uses: actions/download-artifact@v4
-              with:
-                  name: finetune-data
-                  path: finetune_data/
+      - name: Download training data
+        uses: actions/download-artifact@v4
+        with:
+          name: finetune-data
+          path: finetune_data/
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-            - name: Install Kaggle CLI
-              run: pip install -q kaggle
+      - name: Install Kaggle CLI
+        run: pip install -q kaggle
 
-            - name: Configure Kaggle credentials
-              run: |
-                  mkdir -p ~/.kaggle
-                  echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
-                  chmod 600 ~/.kaggle/kaggle.json
+      - name: Configure Kaggle credentials
+        run: |
+          mkdir -p ~/.kaggle
+          echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
 
-            - name: Package and Push Fine-Tune Kernel to Kaggle
-              run: |
-                  python scripts/push_lora_kaggle.py \
-                    --data_path finetune_data/new_samples.jsonl \
-                    --kernel_title "MaTriX-AI LoRA Fine-Tune $(date +%Y-%m-%d)" \
-                    --sample_count "${{ needs.analyze-and-collect.outputs.sample_count }}"
+      - name: Package and Push Fine-Tune Kernel to Kaggle
+        run: |
+          python scripts/push_lora_kaggle.py \
+            --data_path finetune_data/new_samples.jsonl \
+            --kernel_title "MaTriX-AI LoRA Fine-Tune $(date +%Y-%m-%d)" \
+            --sample_count "${{ needs.analyze-and-collect.outputs.sample_count }}"
 
-            - name: Wait for Kaggle kernel completion
-              run: |
-                  python scripts/wait_kaggle_kernel.py \
-                    --kernel "${{ secrets.KAGGLE_USERNAME }}/matrix-ai-lora-finetune" \
-                    --timeout_minutes 180
+      - name: Wait for Kaggle kernel completion
+        run: |
+          python scripts/wait_kaggle_kernel.py \
+            --kernel "${{ secrets.KAGGLE_USERNAME }}/matrix-ai-lora-finetune" \
+            --timeout_minutes 180
 
-            - name: Download fine-tuned adapter weights
-              run: |
-                  python scripts/download_lora_weights.py \
-                    --kernel "${{ secrets.KAGGLE_USERNAME }}/matrix-ai-lora-finetune" \
-                    --output_path lora_adapters/
+      - name: Download fine-tuned adapter weights
+        run: |
+          python scripts/download_lora_weights.py \
+            --kernel "${{ secrets.KAGGLE_USERNAME }}/matrix-ai-lora-finetune" \
+            --output_path lora_adapters/
 
-            - name: Upload adapter weights to HuggingFace Hub
-              run: |
-                  python scripts/push_adapter_to_hub.py \
-                    --adapter_path lora_adapters/ \
-                    --repo_id "${{ secrets.HF_USERNAME }}/matrix-medgemma-4b-lora"
+      - name: Upload adapter weights to HuggingFace Hub
+        run: |
+          python scripts/push_adapter_to_hub.py \
+            --adapter_path lora_adapters/ \
+            --repo_id "${{ secrets.HF_USERNAME }}/matrix-medgemma-4b-lora"
 
-            - name: Upload LoRA adapters artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: lora-adapters
-                  path: lora_adapters/
-                  retention-days: 30
+      - name: Upload LoRA adapters artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lora-adapters
+          path: lora_adapters/
+          retention-days: 30
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Job 3: Automated Swarm Workflow Self-Improvement via Copilot
-    # ─────────────────────────────────────────────────────────────────────────
-    swarm-self-improve:
-        name: 🔄 Copilot Swarm Architecture Review
-        needs: analyze-and-collect
-        runs-on: ubuntu-latest
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3: Automated Swarm Workflow Self-Improvement via Copilot
+  # ─────────────────────────────────────────────────────────────────────────
+  swarm-self-improve:
+    name: 🔄 Copilot Swarm Architecture Review
+    needs: analyze-and-collect
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-            - name: Install analysis dependencies
-              run: pip install -q anthropic openai python-dotenv
+      - name: Install analysis dependencies
+        run: pip install -q anthropic openai python-dotenv
 
-            - name: Run Swarm Architecture Audit
-              id: audit
-              env:
-                  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-                  DRIFT_SCORE: ${{ needs.analyze-and-collect.outputs.drift_score }}
-              run: |
-                  python scripts/swarm_audit.py \
-                    --drift_score "$DRIFT_SCORE" \
-                    --output_path swarm_improvements.json
+      - name: Run Swarm Architecture Audit
+        id: audit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT_SCORE: ${{ needs.analyze-and-collect.outputs.drift_score }}
+        run: |
+          python scripts/swarm_audit.py \
+            --drift_score "$DRIFT_SCORE" \
+            --output_path swarm_improvements.json
 
-            - name: Apply Automated Improvements
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  python scripts/apply_swarm_improvements.py \
-                    --improvements_path swarm_improvements.json
+      - name: Apply Automated Improvements
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/apply_swarm_improvements.py \
+            --improvements_path swarm_improvements.json
 
-            - name: Open Pull Request with Improvements
-              uses: peter-evans/create-pull-request@v6
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  commit-message: "🤖 [Auto] Swarm architecture improvements - week $(date +%Y-W%V)"
-                  title: "🤖 Weekly Swarm Self-Improvement — $(date +%Y-%m-%d)"
-                  body: |
-                      ## 🧠 Automated Swarm Architecture Improvements
+      - name: Open Pull Request with Improvements
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "🤖 [Auto] Swarm architecture improvements - week $(date +%Y-W%V)"
+          title: "🤖 Weekly Swarm Self-Improvement — $(date +%Y-%m-%d)"
+          body: |
+            ## 🧠 Automated Swarm Architecture Improvements
 
-                      This PR was automatically generated by the **MaTriX-AI Self-Improvement Pipeline**.
+            This PR was automatically generated by the **MaTriX-AI Self-Improvement Pipeline**.
 
-                      ### Summary
-                      - **Drift Score**: ${{ needs.analyze-and-collect.outputs.drift_score }}
-                      - **Training Samples Collected**: ${{ needs.analyze-and-collect.outputs.sample_count }}
+            ### Summary
+            - **Drift Score**: ${{ needs.analyze-and-collect.outputs.drift_score }}
+            - **Training Samples Collected**: ${{ needs.analyze-and-collect.outputs.sample_count }}
 
-                      ### Changes Made
-                      The Copilot swarm audit identified areas for improvement and applied them automatically.
-                      Please review and merge if the changes look appropriate.
+            ### Changes Made
+            The Copilot swarm audit identified areas for improvement and applied them automatically.
+            Please review and merge if the changes look appropriate.
 
-                      > ⚕️ **Clinical Safety Note**: All agent prompt changes are reviewed against hardcoded
-                      > clinical safety rules in `critique_agent.py` before being applied.
-                  branch: "auto/swarm-improvement-$(date +%Y%m%d)"
-                  labels: "automated, self-improvement, ai-generated"
-                  draft: false
+            > ⚕️ **Clinical Safety Note**: All agent prompt changes are reviewed against hardcoded
+            > clinical safety rules in `critique_agent.py` before being applied.
+          branch: "auto/swarm-improvement-$(date +%Y%m%d)"
+          labels: "automated, self-improvement, ai-generated"
+          draft: false
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Job 4: Run Validation Suite to Verify Improvements
-    # ─────────────────────────────────────────────────────────────────────────
-    validate-improvements:
-        name: ✅ Run Kaggle Validation Suite
-        needs: [lora-finetune, swarm-self-improve]
-        if: always() && needs.analyze-and-collect.outputs.needs_finetune == 'true'
-        runs-on: ubuntu-latest
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 4: Run Validation Suite to Verify Improvements
+  # ─────────────────────────────────────────────────────────────────────────
+  validate-improvements:
+    name: ✅ Run Kaggle Validation Suite
+    needs: [lora-finetune, swarm-self-improve]
+    if: always() && needs.analyze-and-collect.outputs.needs_finetune == 'true'
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Trigger Kaggle Validation Notebook
-              env:
-                  KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-                  KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-              run: |
-                  pip install -q kaggle
-                  mkdir -p ~/.kaggle
-                  echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
-                  kaggle kernels push -p notebooks/
+      - name: Trigger Kaggle Validation Notebook
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        run: |
+          pip install -q kaggle
+          mkdir -p ~/.kaggle
+          echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
+          kaggle kernels push -p notebooks/
 
-            - name: Post Summary to PR
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: |
-                  echo "## 🧪 Validation Suite Triggered" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "The Kaggle validation notebook has been pushed and will run automatically." >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "Monitor at: https://www.kaggle.com/${{ secrets.KAGGLE_USERNAME }}/matrix-ai-validation" >> $GITHUB_STEP_SUMMARY
+      - name: Post Summary to PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "## 🧪 Validation Suite Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The Kaggle validation notebook has been pushed and will run automatically." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Monitor at: https://www.kaggle.com/${{ secrets.KAGGLE_USERNAME }}/matrix-ai-validation" >> $GITHUB_STEP_SUMMARY

@@ -14,6 +14,15 @@ def new_uuid():
     return str(uuid.uuid4())
 
 
+class SystemConfig(Base):
+    """Global system configuration flags shared across edge and cloud nodes."""
+    __tablename__ = "system_config"
+
+    key = Column(String(50), primary_key=True)
+    value = Column(JSON, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Patient(Base):
     __tablename__ = "patients"
 

@@ -28,9 +28,9 @@ def main():
 
     print(f"🕵️‍♂️ Running Copilot Swarm Audit (Drift: {args.drift_score})")
 
-    # If API key is missing, mock a Copilot recommendation
-    api_key = os.environ.get("OPENAI_API_KEY", "")
-    if not api_key or not OpenAI:
+    # If API token is missing, mock a Copilot recommendation
+    github_token = os.environ.get("GITHUB_TOKEN", "")
+    if not github_token or not OpenAI:
         print("[audit] Defaulting to synthetic Copilot improvement for CI/CD demonstration.")
         
         # Example synthetic response: The Copilot suggests tightening BP bounds in the prompt
@@ -45,8 +45,11 @@ def main():
             ]
         }
     else:
-        # Real Copilot Prompting Workflow using OpenAI
-        client = OpenAI(api_key=api_key)
+        # Real Copilot Prompting Workflow using GitHub Models & OpenAI SDK
+        client = OpenAI(
+            base_url="https://models.inference.ai.azure.com",
+            api_key=github_token
+        )
         
         prompt = (
             f"You are the Copilot architect for MaTriX-AI, a maternal triage system.\n"

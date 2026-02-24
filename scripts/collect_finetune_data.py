@@ -29,6 +29,25 @@ def query_confirmed_cases(database_url: str, days_back: int = 30, min_risk: str 
 
         async def _query():
             conn = await asyncpg.connect(database_url)
+            
+            # 1) Check if clinic has opted-in to data collection
+            config_enabled = True # default true if not set, or we can default false
+            try:
+                val = await conn.fetchval("SELECT value FROM system_config WHERE key = 'data_collection_enabled'")
+                if val is not None:
+                    # Depending on asyncpg version, JSON is returned as string or dict
+                    if isinstance(val, str):
+                        import json
+                        val = json.loads(val)
+                    config_enabled = val.get("enabled", False)
+            except Exception as e:
+                print(f"[collect] Could not read system_config: {e}")
+                
+            if not config_enabled:
+                print("[collect] 🛑 Data Collection for Fine-Tuning is DISABLED in the clinic frontend.")
+                await conn.close()
+                return []
+
             cutoff = datetime.utcnow() - timedelta(days=days_back)
             rows = await conn.fetch("""
                 SELECT
